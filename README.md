@@ -77,7 +77,7 @@ pip install aicortex
 ### Install from Source
 
 ```bash
-git clone https://github.com/your-username/aicortex.git
+git clone https://github.com/xiongfazhan/aicortex.git
 cd aicortex
 pip install -e .
 ```
@@ -347,7 +347,7 @@ response = client.chat.completions.create(
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/aicortex.git
+git clone https://github.com/xiongfazhan/aicortex.git
 cd aicortex
 
 # Install with dev dependencies
@@ -436,8 +436,8 @@ This Python version aims to provide feature parity while leveraging Python's eco
 ## 📮 Support
 
 - **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/your-username/aicortex/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/aicortex/discussions)
+- **Issues**: [GitHub Issues](https://github.com/xiongfazhan/aicortex/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/xiongfazhan/aicortex/discussions)
 
 ---
 
