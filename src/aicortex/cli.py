@@ -147,6 +147,7 @@ async def _main(
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
+        print("使用 `--help` 查看用法", file=sys.stderr)
         sys.exit(1)
 
 
@@ -193,6 +194,8 @@ async def _run_cmd_mode(config: "Config", text: Optional[str], files: list[str])
     """
     if not text and not files:
         print("Error: No input provided", file=sys.stderr)
+        print("可直接运行 `aicortex` 进入 REPL", file=sys.stderr)
+        print("或使用 `aicortex '你的问题'`", file=sys.stderr)
         sys.exit(1)
 
     # Build input from files if provided
@@ -267,6 +270,7 @@ async def _run_cmd_mode(config: "Config", text: Optional[str], files: list[str])
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
+        print("使用 `--help` 查看用法", file=sys.stderr)
         sys.exit(1)
 
 
