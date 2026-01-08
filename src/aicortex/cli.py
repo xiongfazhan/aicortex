@@ -14,7 +14,7 @@ import asyncio
 import typer
 from typing import Optional
 
-app = typer.Typer(help="AIChat - All-in-one LLM CLI Tool")
+app = typer.Typer(help="AICortex - All-in-one LLM CLI Tool")
 
 
 @app.command()
@@ -39,7 +39,7 @@ def main(
     list_agents: bool = typer.Option(False, "--list-agents", help="List agents"),
     info: bool = typer.Option(False, "--info", help="Show info"),
 ):
-    """AIChat CLI - All-in-one LLM CLI Tool
+    """AICortex CLI - All-in-one LLM CLI Tool
 
     Interact with Large Language Models from multiple providers.
     """
@@ -147,6 +147,7 @@ async def _main(
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
+        print("使用 `--help` 查看用法", file=sys.stderr)
         sys.exit(1)
 
 
@@ -193,6 +194,8 @@ async def _run_cmd_mode(config: "Config", text: Optional[str], files: list[str])
     """
     if not text and not files:
         print("Error: No input provided", file=sys.stderr)
+        print("可直接运行 `aicortex` 进入 REPL", file=sys.stderr)
+        print("或使用 `aicortex '你的问题'`", file=sys.stderr)
         sys.exit(1)
 
     # Build input from files if provided
@@ -267,6 +270,7 @@ async def _run_cmd_mode(config: "Config", text: Optional[str], files: list[str])
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
+        print("使用 `--help` 查看用法", file=sys.stderr)
         sys.exit(1)
 
 
@@ -334,7 +338,7 @@ def _show_info(config: "Config") -> None:
     Args:
         config: Configuration
     """
-    print("AIChat Configuration:")
+    print("AICortex Configuration:")
     print(f"  Model: {config.model_id}")
     print(f"  Temperature: {config.temperature}")
     print(f"  Top P: {config.top_p}")
