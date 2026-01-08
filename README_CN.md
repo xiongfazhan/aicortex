@@ -194,6 +194,7 @@ aicortex
   --prompt TEXT             设置提示
   --rag TEXT                RAG 名称
   --agent TEXT              智能体名称
+  -f, --file TEXT           包含文件内容
   -e, --execute             Shell 执行模式
   -c, --code                代码模式
   --serve TEXT              启动 HTTP 服务器
@@ -201,6 +202,9 @@ aicortex
   --dry-run                 干运行模式
   --list-models             列出可用模型
   --list-roles              列出可用角色
+  --list-sessions           列出可用会话
+  --list-rags               列出可用 RAG
+  --list-agents             列出可用 Agent
   --info                    显示配置信息
   --help                    显示帮助
 ```
