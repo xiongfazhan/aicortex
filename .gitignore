@@ -152,7 +152,6 @@ config.example.yaml
 config.simple.yaml
 models.yaml
 .env.example
-pyproject.toml
 
 # User config directory
 .config/aichat/

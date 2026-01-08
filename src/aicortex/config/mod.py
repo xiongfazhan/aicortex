@@ -136,13 +136,13 @@ class Config:
         if self._config_path:
             return self._config_path
 
-        # Check environment variable
-        env_path = os.environ.get("AICHAT_CONFIG_DIR")
+        # Check environment variable (support both AICORTEX and AICHAT for compatibility)
+        env_path = os.environ.get("AICORTEX_CONFIG_DIR") or os.environ.get("AICHAT_CONFIG_DIR")
         if env_path:
             return Path(env_path) / "config.yaml"
 
         # Use default location
-        config_dir = Path.home() / ".config" / "aichat"
+        config_dir = Path.home() / ".config" / "aicortex"
         return config_dir / "config.yaml"
 
     async def _resolve_model(self, model_id: str) -> Model:
