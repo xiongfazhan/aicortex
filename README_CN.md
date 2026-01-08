@@ -462,6 +462,6 @@ aicortex/
 
 <div align="center">
 
-**用 ❤️ 由 AIChat 社区构建**
+**由 AICortex 社区用 ❤️ 构建**
 
 </div>
