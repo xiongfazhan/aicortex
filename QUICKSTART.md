@@ -159,24 +159,25 @@ for i, chunk in enumerate(chunks):
 
 ```
 选项:
-  -m, --model <模型>      指定模型 (例如: openai:gpt-4)
-  --role <角色>           使用指定角色
-  --session <会话>        指定会话名称
-  --rag <RAG>            使用 RAG 检索
-  --agent <Agent>        使用 Agent
-  -e, --execute          执行 shell 模式
-  -c, --code             代码模式
-  --serve <地址>         启动 HTTP 服务器
-  --no-stream            禁用流式输出
-  --dry-run              干运行模式
-  --list-models          列出所有模型
-  --list-roles           列出所有角色
-  --list-sessions        列出所有会话
-  --list-rags            列出所有 RAG
-  --list-agents          列出所有 Agent
-  --info                 显示配置信息
-  -f, --file <文件>      包含文件内容
-  -h, --help             显示帮助
+  -f, --file TEXT          输入文件
+  -m, --model TEXT          使用的模型 (如: openai:gpt-4)
+  --role TEXT               使用的角色 (如: programmer)
+  -s, --session TEXT        会话名称
+  --prompt TEXT             设置提示
+  --rag TEXT                RAG 名称
+  --agent TEXT              智能体名称
+  -e, --execute             Shell 执行模式
+  -c, --code                代码模式
+  --serve TEXT              启动 HTTP 服务器
+  --no-stream               禁用流式输出
+  --dry-run                 干运行模式
+  --list-models             列出可用模型
+  --list-roles              列出可用角色
+  --list-sessions           列出可用会话
+  --list-rags               列出可用 RAG
+  --list-agents             列出可用智能体
+  --info                    显示配置信息
+  --help                    显示帮助
 ```
 
 ## 角色
