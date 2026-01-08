@@ -7,12 +7,15 @@ import os
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional, Any, TYPE_CHECKING
 import yaml
 
 from ..client import Model
 from .role import Role
 from .session import Session
+
+if TYPE_CHECKING:
+    from ..rag.mod import Rag
 
 
 class WorkingMode(Enum):
@@ -89,6 +92,8 @@ class Config:
     model: Optional[Model] = field(default=None, init=False, compare=False)
     role: Optional[Role] = field(default=None, init=False, compare=False)
     session: Optional[Session] = field(default=None, init=False, compare=False)
+    rag: Optional["Rag"] = field(default=None, init=False, compare=False)
+    rag_name: Optional[str] = field(default=None, init=False, compare=False)
     working_mode: WorkingMode = field(default=WorkingMode.CMD, init=False, compare=False)
 
     _config_path: Optional[Path] = field(default=None, init=False, repr=False)
@@ -386,6 +391,64 @@ class Config:
                 rags.append(rag_file.stem)
 
         return rags
+
+    def use_rag(self, name: str) -> bool:
+        """Set and load the current RAG configuration.
+
+        Args:
+            name: RAG name to use
+
+        Returns:
+            True if RAG was loaded/created successfully
+        """
+        from ..rag.mod import Rag, RagData
+
+        self.rag_name = name
+        rag_path = self.get_rag_path(name)
+
+        # Create rag directory if needed
+        rag_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if rag_path.exists():
+            # Load existing RAG
+            try:
+                self.rag = Rag.load(str(rag_path))
+                return True
+            except Exception as e:
+                print(f"Failed to load RAG: {e}")
+                return False
+        else:
+            # Create new RAG
+            embedding_model = self.rag_embedding_model or "openai:text-embedding-ada-002"
+            chunk_size = self.rag_chunk_size or 1000
+            chunk_overlap = self.rag_chunk_overlap or 200
+
+            data = RagData.new(
+                embedding_model=embedding_model,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+                reranker_model=self.rag_reranker_model,
+                top_k=self.rag_top_k,
+                batch_size=None,
+            )
+
+            self.rag = Rag(name=name, path=str(rag_path), data=data)
+            # Save new RAG
+            self.rag.save()
+            return True
+
+    def get_rag_path(self, name: Optional[str] = None) -> Path:
+        """Get the path to a RAG configuration file.
+
+        Args:
+            name: RAG name (uses current if None)
+
+        Returns:
+            Path to RAG YAML file
+        """
+        rag_name = name or self.rag_name
+        config_dir = self._get_config_path().parent
+        return config_dir / "rag" / f"{rag_name}.yaml"
 
     def agent_functions_dir(self, name: str) -> Path:
         """Get the functions directory for an agent.

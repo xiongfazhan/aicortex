@@ -157,9 +157,15 @@ class OpenAIClient(Client):
         url = f"{self.api_base}/embeddings"
         headers = self._build_headers()
         body = {
-            "model": self.model.name(),
+            "model": data.model or self.model.name(),
             "input": data.texts,
         }
+
+        # Add input_type for NIM embedding models
+        if data.input_type:
+            body["input_type"] = data.input_type
+        elif data.query:
+            body["input_type"] = "query"
 
         response = await self.http_client.post(url, headers=headers, json=body)
         response.raise_for_status()

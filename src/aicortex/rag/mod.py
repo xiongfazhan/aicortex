@@ -542,12 +542,14 @@ class Rag:
         self,
         query: str,
         top_k: Optional[int] = None,
+        config: Any = None,
     ) -> tuple[str, list[DocumentId]]:
         """Search for relevant documents.
 
         Args:
             query: Search query
             top_k: Number of results (default: from config)
+            config: Config for embedding client
 
         Returns:
             Tuple of (joined_results, document_ids)
@@ -556,7 +558,7 @@ class Rag:
             top_k = self.data.top_k
 
         # Perform hybrid search
-        ids = await self._hybrid_search(query, top_k)
+        ids = await self._hybrid_search(query, top_k, config)
 
         # Get documents
         documents = []
@@ -568,19 +570,20 @@ class Rag:
         return "\n\n".join(documents), ids
 
     async def _hybrid_search(
-        self, query: str, top_k: int
+        self, query: str, top_k: int, config: Any = None
     ) -> list[DocumentId]:
         """Perform hybrid vector + keyword search.
 
         Args:
             query: Search query
             top_k: Number of results
+            config: Config for embedding client
 
         Returns:
             List of document IDs
         """
         # Vector search
-        vector_results = await self._vector_search(query, top_k, 0.0)
+        vector_results = await self._vector_search(query, top_k, 0.0, config)
 
         # Keyword search
         keyword_results = self._keyword_search(query, top_k, 0.0)
@@ -593,7 +596,7 @@ class Rag:
         )
 
     async def _vector_search(
-        self, query: str, top_k: int, min_score: float
+        self, query: str, top_k: int, min_score: float, config: Any = None
     ) -> list[tuple[DocumentId, float]]:
         """Perform vector similarity search.
 
@@ -601,14 +604,188 @@ class Rag:
             query: Query string
             top_k: Number of results
             min_score: Minimum score threshold
+            config: Config object with embedding model info
 
         Returns:
             List of (DocumentId, score) tuples
         """
-        # This would require embedding the query
-        # For now, return empty list
-        # TODO: Implement query embedding
-        return []
+        if self.faiss_index is None or not self.data.vectors:
+            return []
+
+        # Get query embedding
+        query_embedding = await self._get_query_embedding(query, config)
+        if not query_embedding:
+            return []
+
+        # Search FAISS index
+        results = self.faiss_index.search(query_embedding, top_k)
+        return [(doc_id, score) for doc_id, score in results if score > min_score]
+
+    async def _get_query_embedding(self, query: str, config: Any = None) -> Optional[list[float]]:
+        """Get embedding for query text.
+
+        Args:
+            query: Query text
+            config: Config with embedding model info
+
+        Returns:
+            Embedding vector or None
+        """
+        if config is None:
+            return None
+
+        try:
+            client = await self._get_embedding_client(config)
+            if client is None:
+                return None
+
+            from ..client import EmbeddingsData
+            data = EmbeddingsData(texts=[query], query=True, input_type="query")
+            embeddings = await client.embeddings(data)
+            return embeddings[0] if embeddings else None
+        except Exception as e:
+            print(f"Error getting query embedding: {e}")
+            return None
+
+    async def _get_embedding_client(self, config: Any) -> Optional[Any]:
+        """Get embedding client from config.
+
+        Args:
+            config: Config with embedding model info
+
+        Returns:
+            Client instance or None
+        """
+        embedding_model_id = config.rag_embedding_model or self.data.embedding_model
+        if not embedding_model_id:
+            return None
+
+        # Parse provider:model format
+        if ":" in embedding_model_id:
+            provider, model_name = embedding_model_id.split(":", 1)
+        else:
+            provider = "openai"
+            model_name = embedding_model_id
+
+        # Get client config
+        client_config = config.get_client_config(provider)
+        if not client_config:
+            return None
+
+        api_key = client_config.get("api_key", "")
+        api_base = client_config.get("api_base")
+
+        # Create model
+        from ..client import Model
+        model = Model.new(provider, model_name)
+
+        # Create client
+        from ..llm import create_client
+        return await create_client(provider, api_key, model, api_base)
+
+    async def build_from_paths(self, config: Any) -> int:
+        """Build RAG from document paths.
+
+        Reads files, splits into chunks, generates embeddings.
+
+        Args:
+            config: Config with embedding model info
+
+        Returns:
+            Number of documents processed
+        """
+        import hashlib
+        from pathlib import Path as FilePath
+
+        pending_paths = [
+            p for p in self.data.document_paths
+            if not any(f.path == p for f in self.data.files.values())
+        ]
+
+        if not pending_paths:
+            return 0
+
+        # Get embedding client
+        client = await self._get_embedding_client(config)
+        if client is None:
+            raise ValueError("Could not create embedding client")
+
+        processed = 0
+        next_file_id = self.data.next_file_id
+
+        for doc_path in pending_paths:
+            path = FilePath(doc_path)
+            if not path.exists():
+                print(f"Warning: File not found: {doc_path}")
+                continue
+
+            # Read file content
+            try:
+                content = path.read_text(encoding="utf-8")
+            except Exception as e:
+                print(f"Warning: Could not read {doc_path}: {e}")
+                continue
+
+            # Calculate hash
+            file_hash = hashlib.sha256(content.encode()).hexdigest()
+
+            # Split into chunks
+            extension = path.suffix.lstrip(".")
+            splitter = RecursiveCharacterTextSplitter.from_extension(
+                extension,
+                self.data.chunk_size,
+                self.data.chunk_overlap,
+            )
+
+            from .splitter.mod import RagDocument as SplitterDoc, SplitterChunkHeaderOptions
+            chunks = splitter.split_text(content)
+
+            if not chunks:
+                continue
+
+            # Create RagDocuments
+            documents = [RagDocument(page_content=chunk) for chunk in chunks]
+
+            # Generate embeddings
+            try:
+                from ..client import EmbeddingsData
+                data = EmbeddingsData(
+                    texts=chunks,
+                    query=False,
+                    input_type="passage"
+                )
+                embeddings = await client.embeddings(data)
+            except Exception as e:
+                print(f"Warning: Could not generate embeddings for {doc_path}: {e}")
+                continue
+
+            # Create RagFile
+            rag_file = RagFile(
+                hash=file_hash,
+                path=doc_path,
+                documents=documents,
+            )
+
+            # Add to data
+            file_id = next_file_id
+            next_file_id += 1
+
+            self.data.files[file_id] = rag_file
+
+            # Store embeddings
+            for doc_idx, embedding in enumerate(embeddings):
+                doc_id = DocumentId(file_id, doc_idx)
+                self.data.vectors[doc_id] = embedding
+
+            processed += 1
+            print(f"  Processed: {path.name} ({len(chunks)} chunks)")
+
+        self.data.next_file_id = next_file_id
+
+        # Rebuild indexes
+        self._build_indexes()
+
+        return processed
 
     def _keyword_search(
         self, query: str, top_k: int, min_score: float
