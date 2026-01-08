@@ -1164,8 +1164,15 @@ class Repl:
         print(_msg(f"正在重建 RAG '{rag.name}'...", f"Rebuilding RAG '{rag.name}'..."))
 
         try:
-            # Rebuild indexes
-            rag._build_indexes()
+            # Process pending documents and generate embeddings
+            pending = [p for p in rag.data.document_paths if not any(f.path == p for f in rag.data.files.values())]
+            if pending:
+                print(_msg(f"处理 {len(pending)} 个待处理文档...", f"Processing {len(pending)} pending document(s)..."))
+                processed = await rag.build_from_paths(self.config)
+                print(_msg(f"已处理 {processed} 个文档", f"Processed {processed} document(s)"))
+            else:
+                # Just rebuild indexes from existing data
+                rag._build_indexes()
 
             # Save RAG data
             rag.save()
