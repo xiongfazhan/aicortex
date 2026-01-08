@@ -218,7 +218,7 @@ class Repl:
 
         if StateFlags.RAG in self.state:
             if hasattr(self.config, "rag") and self.config.rag:
-                rag_name = self.config.rag.name()
+                rag_name = self.config.rag.name
                 parts.append(f"[{rag_name}]")
 
         if StateFlags.ROLE in self.state:
@@ -984,9 +984,19 @@ class Repl:
         if action == "--list" or action == "-l":
             # List documents in RAG
             print(_msg(f"RAG '{rag.name}' 中的文档:", f"Documents in RAG '{rag.name}':"))
+
+            # Show indexed files
             for file_id, file in rag.data.files.items():
                 print(f"  [{file_id}] {file.path} ({len(file.documents)} chunks)")
-            if not rag.data.files:
+
+            # Show pending documents (not yet indexed)
+            pending = [p for p in rag.data.document_paths if not any(f.path == p for f in rag.data.files.values())]
+            if pending:
+                print(_msg("\n待索引文档:", "\nPending documents (not indexed):"))
+                for p in pending:
+                    print(f"  - {p}")
+
+            if not rag.data.files and not rag.data.document_paths:
                 print(_msg("  (没有文档)", "  (No documents)"))
 
         elif action == "--add" or action == "-a":
@@ -1032,6 +1042,8 @@ class Repl:
             if added > 0:
                 print(_msg(f"\n已添加 {added} 个文件", f"\nAdded {added} file(s)"))
                 print(_msg("注意: 搜索需要重建索引。使用: .rebuild rag", "Note: Index rebuild required for search. Use: .rebuild rag"))
+                # Save RAG
+                rag.save()
 
         elif action == "--remove" or action == "-r":
             # Remove documents

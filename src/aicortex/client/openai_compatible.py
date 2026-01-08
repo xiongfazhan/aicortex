@@ -87,7 +87,13 @@ class OpenAICompatibleClient(OpenAIClient):
         api_base = self.api_base
 
         # Determine endpoint based on provider
-        if self.client_name.startswith("ernie"):
+        if self.client_name in ("nim", "nvidia"):
+            # NIM uses special endpoint: ai.api.nvidia.com/v1/retrieval/{model}/reranking
+            model_name = data.model or self.model.real_name()
+            # Replace . with _ in model name for URL
+            model_url_name = model_name.replace(".", "_").replace("/", "/")
+            endpoint = f"https://ai.api.nvidia.com/v1/retrieval/{model_url_name}/reranking"
+        elif self.client_name.startswith("ernie"):
             endpoint = f"{api_base}/rerankers"
         else:
             endpoint = f"{api_base}/rerank"
@@ -99,6 +105,14 @@ class OpenAICompatibleClient(OpenAIClient):
         response.raise_for_status()
 
         result = response.json()
+
+        # Handle NIM response format
+        if "rankings" in result:
+            # NIM returns {rankings: [{index, logit}, ...]}
+            return [
+                {"index": r["index"], "relevance_score": r.get("logit", 0)}
+                for r in result["rankings"]
+            ]
 
         # Some providers return results in data.results
         if "results" not in result and "data" in result:
@@ -115,8 +129,18 @@ class OpenAICompatibleClient(OpenAIClient):
         Returns:
             Request body dictionary
         """
+        model_name = data.model or self.model.real_name()
+
+        # NIM uses different body format
+        if self.client_name in ("nim", "nvidia"):
+            return {
+                "model": model_name,
+                "query": {"text": data.query},
+                "passages": [{"text": doc} for doc in data.documents],
+            }
+
         body = {
-            "model": self.model.real_name(),
+            "model": model_name,
             "query": data.query,
             "documents": data.documents,
         }
