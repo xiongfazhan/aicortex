@@ -14,7 +14,7 @@ import asyncio
 import typer
 from typing import Optional
 
-app = typer.Typer(help="AIChat - All-in-one LLM CLI Tool")
+app = typer.Typer(help="AICortex - All-in-one LLM CLI Tool")
 
 
 @app.command()
@@ -39,7 +39,7 @@ def main(
     list_agents: bool = typer.Option(False, "--list-agents", help="List agents"),
     info: bool = typer.Option(False, "--info", help="Show info"),
 ):
-    """AIChat CLI - All-in-one LLM CLI Tool
+    """AICortex CLI - All-in-one LLM CLI Tool
 
     Interact with Large Language Models from multiple providers.
     """
@@ -334,7 +334,7 @@ def _show_info(config: "Config") -> None:
     Args:
         config: Configuration
     """
-    print("AIChat Configuration:")
+    print("AICortex Configuration:")
     print(f"  Model: {config.model_id}")
     print(f"  Temperature: {config.temperature}")
     print(f"  Top P: {config.top_p}")
