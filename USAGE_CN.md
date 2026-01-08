@@ -50,6 +50,31 @@ aicortex --no-stream "分析这段文本"
 aicortex --file code.py "解释这个文件"
 ```
 
+### CLI 选项
+
+```bash
+选项:
+  -f, --file TEXT          输入文件
+  -m, --model TEXT          使用的模型 (如: openai:gpt-4)
+  --role TEXT               使用的角色 (如: programmer)
+  -s, --session TEXT        会话名称
+  --prompt TEXT             设置提示
+  --rag TEXT                RAG 名称
+  --agent TEXT              智能体名称
+  -e, --execute             Shell 执行模式
+  -c, --code                代码模式
+  --serve TEXT              启动 HTTP 服务器
+  --no-stream               禁用流式输出
+  --dry-run                 干运行模式
+  --list-models             列出可用模型
+  --list-roles              列出可用角色
+  --list-sessions           列出可用会话
+  --list-rags               列出可用 RAG
+  --list-agents             列出可用智能体
+  --info                    显示配置信息
+  --help                    显示帮助
+```
+
 ### REPL 模式 - 交互式对话
 
 ```bash
