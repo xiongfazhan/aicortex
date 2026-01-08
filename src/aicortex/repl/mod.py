@@ -272,10 +272,10 @@ class Repl:
         """
         if _is_chinese():
             print("欢迎使用 AICortex")
-            print('输入 ".help" 查看帮助信息')
+            print('输入 ".help" 查看可用命令')
         else:
             print("Welcome to AICortex")
-            print('Type ".help" for additional help')
+            print('Type ".help" for available commands')
         print()
 
         session = self._get_session()
