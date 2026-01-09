@@ -170,9 +170,15 @@ class OpenAIClient(Client):
         # Add truncate for NIM
         if data.truncate:
             body["truncate"] = data.truncate
+        if data.encoding_format:
+            body["encoding_format"] = data.encoding_format
 
         response = await self.http_client.post(url, headers=headers, json=body)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError:
+            print(f"Error response body: {response.text}")
+            raise
 
         result = response.json()
         return [item["embedding"] for item in result.get("data", [])]

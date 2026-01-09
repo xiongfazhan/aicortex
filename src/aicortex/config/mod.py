@@ -65,11 +65,20 @@ class Config:
     summary_prompt: Optional[str] = None
 
     # RAG Configuration
-    rag_embedding_model: Optional[str] = None
-    rag_reranker_model: Optional[str] = None
-    rag_top_k: int = 5
-    rag_chunk_size: Optional[int] = None
-    rag_chunk_overlap: Optional[int] = None
+    rag_embedding_model: Optional[str] = "nim:nvidia/llama-3.2-nv-embedqa-1b-v2"
+    rag_reranker_model: Optional[str] = "nim:nvidia/llama-3.2-nv-rerankqa-1b-v2"
+    rag_top_k: int = 10
+    rag_chunk_size: Optional[int] = 1200
+    rag_chunk_overlap: Optional[int] = 120
+    rag_vector_top_k: int = 60
+    rag_bm25_top_k: int = 60
+    rag_candidate_k: int = 36
+    rag_file_cap: int = 6
+    rag_section_cap: int = 4
+    rag_rerank_top_k: int = 10
+    rag_parent_min_tokens: int = 2500
+    rag_parent_max_tokens: int = 4500
+    rag_split_strategy: str = "auto"
     rag_template: Optional[str] = None
     document_loaders: dict[str, str] = field(default_factory=dict)
 
@@ -186,6 +195,10 @@ class Config:
 
         raise ValueError(f"Model not found: {model_id}")
 
+    async def resolve_model(self, model_id: str) -> Model:
+        """Resolve model ID to Model instance (public wrapper)."""
+        return await self._resolve_model(model_id)
+
     def _dict_to_model_data(self, data: dict) -> Any:
         """Convert dict to ModelData.
 
@@ -215,6 +228,8 @@ class Config:
             max_tokens_per_chunk=data.get("max_tokens_per_chunk"),
             default_chunk_size=data.get("default_chunk_size"),
             max_batch_size=data.get("max_batch_size"),
+            api_base=data.get("api_base"),
+            rerank_url=data.get("rerank_url"),
         )
 
     def _update_from_dict(self, data: dict) -> None:
@@ -226,6 +241,27 @@ class Config:
         for key, value in data.items():
             if hasattr(self, key):
                 setattr(self, key, value)
+
+    def _parse_option_value(self, value: str) -> Any:
+        """Parse a string value into a Python type when possible."""
+        if value == "":
+            return value
+        try:
+            return yaml.safe_load(value)
+        except Exception:
+            return value
+
+    def set_option(self, key: str, value: str) -> bool:
+        """Set a configuration option by key.
+
+        Returns:
+            True if the option was set, False otherwise.
+        """
+        if not hasattr(self, key):
+            return False
+        parsed = self._parse_option_value(value)
+        setattr(self, key, parsed)
+        return True
 
     def _get_default_model(self) -> str:
         """Get default model from configuration.

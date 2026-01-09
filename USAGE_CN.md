@@ -31,11 +31,11 @@ python test_usage.py
 
 ## 使用方式
 
-### CLI 模式 - 单次查询
+### CLI 使用示例
 
 ```bash
 # 基本使用
-aicortex "你好，请介绍一下 Python"
+aicortex "你好，介绍一下 Python"
 
 # 指定模型
 aicortex -m openai:gpt-4 "写一个快速排序"
@@ -43,56 +43,164 @@ aicortex -m openai:gpt-4 "写一个快速排序"
 # 使用角色
 aicortex --role programmer "解释这段代码"
 
-# 禁用流式输出
+# 关闭流式输出
 aicortex --no-stream "分析这段文本"
 
 # 包含文件
 aicortex --file code.py "解释这个文件"
+
+# 使用 RAG
+aicortex --rag my-docs "总结文档里的关键点"
+
+# 启动 HTTP 服务
+aicortex --serve 127.0.0.1:8000
 ```
 
-### CLI 选项
+### CLI 参数说明
 
-```bash
-选项:
-  -f, --file TEXT          输入文件
-  -m, --model TEXT          使用的模型 (如: openai:gpt-4)
-  --role TEXT               使用的角色 (如: programmer)
-  -s, --session TEXT        会话名称
-  --prompt TEXT             设置提示
-  --rag TEXT                RAG 名称
-  --agent TEXT              智能体名称
-  -e, --execute             Shell 执行模式
-  -c, --code                代码模式
-  --serve TEXT              启动 HTTP 服务器
-  --no-stream               禁用流式输出
-  --dry-run                 干运行模式
-  --list-models             列出可用模型
-  --list-roles              列出可用角色
-  --list-sessions           列出可用会话
-  --list-rags               列出可用 RAG
-  --list-agents             列出可用智能体
-  --info                    显示配置信息
-  --help                    显示帮助
+```text
+-f, --file TEXT
+  输入文件（可多次）
+
+-m, --model TEXT
+  使用的模型（如 openai:gpt-4）
+
+--role TEXT
+  使用的角色（如 programmer）
+
+-s, --session TEXT
+  会话名称
+
+--prompt TEXT
+  设置提示
+
+--rag TEXT
+  RAG 名称
+
+--agent TEXT
+  智能体名称
+
+-e, --execute
+  Shell 执行模式
+
+-c, --code
+  代码模式
+
+--serve TEXT
+  启动 HTTP 服务
+
+--no-stream
+  禁用流式输出
+
+--dry-run
+  干运行模式
+
+--list-models
+  列出可用模型
+
+--list-roles
+  列出可用角色
+
+--list-sessions
+  列出可用会话
+
+--list-rags
+  列出可用 RAG
+
+--list-agents
+  列出可用智能体
+
+--info
+  显示配置信息
+
+--help
+  显示帮助
 ```
 
-### REPL 模式 - 交互式对话
+### REPL 使用示例
 
-```bash
+```text
 # 启动 REPL
 aicortex
 
-# 在 REPL 中可用命令:
-> .help                  # 显示帮助
-> .info                  # 显示系统信息
-> .model                 # 查看当前模型
-> .model openai:gpt-4    # 切换模型
-> .role                  # 列出所有角色
-> .role programmer       # 切换到程序员角色
-> .set temperature=0.7   # 设置参数
-> .language zh           # 切换到中文
-> .language en           # 切换到英文
-> .language auto         # 自动检测语言
-> .exit                  # 退出 REPL
+# 帮助与信息
+.help
+.info
+
+# 切换模型与角色
+.model openai:gpt-4
+.role programmer
+
+# 会话管理
+.session daily
+.compress session
+.save session
+
+# RAG 使用
+.rag my-docs
+.edit rag-docs --add README.md
+.rebuild rag
+.sources rag
+
+# 语言与运行时设置
+.language zh
+.set temperature=0.7
+
+# 退出
+.exit
+```
+
+### REPL 参数说明
+
+```text
+基础:
+  .help
+  .info
+  .model <模型>
+  .prompt <提示>
+  .set <键>=<值>
+  .language <zh|en|auto>
+  .exit
+
+角色:
+  .role <名称>
+  .info role
+  .edit role
+  .save role
+  .exit role
+
+会话:
+  .session <名称>
+  .empty session
+  .compress session
+  .info session
+  .edit session
+  .save session
+  .exit session
+
+RAG:
+  .rag <名称>
+  .edit rag-docs --list
+  .edit rag-docs --add <路径...>
+  .edit rag-docs --remove <文件ID...>
+  .rebuild rag
+  .sources rag
+  .info rag
+  .exit rag
+
+输入:
+  .file <路径|目录|URL>
+  .continue
+  .regenerate
+  .copy
+
+Agent:
+  .agent <名称>
+  .starter [<数字>|<文本>]
+  .edit agent-config
+
+宏:
+  .macro [<宏名> [args...]]
 ```
 
 ### 加载配置文件

@@ -10,6 +10,16 @@ from typing import Any, Optional, Callable
 from collections import OrderedDict
 from pathlib import Path
 from abc import ABC, abstractmethod
+from ..utils import estimate_token_length
+
+CODE_EXTENSIONS = {
+    "py", "js", "ts", "tsx", "jsx", "java", "go", "rs", "cpp", "c", "h", "hpp",
+    "cs", "php", "rb", "swift", "kt", "kts", "scala", "lua", "sql", "sh", "ps1",
+}
+
+TEXT_EXTENSIONS = {
+    "txt", "log", "ini", "cfg", "conf", "yaml", "yml", "toml", "csv",
+}
 
 try:
     import faiss
@@ -32,6 +42,86 @@ from .serde_vectors import DocumentId, serialize_vectors, deserialize_vectors
 # Type aliases
 FileId = int
 DocumentMetadata = dict
+
+
+def _split_markdown_sections(text: str) -> list[tuple[Optional[str], str]]:
+    """Split markdown into sections by headings, ignoring fenced code blocks."""
+    sections: list[tuple[Optional[str], str]] = []
+    current: list[str] = []
+    current_title: Optional[str] = None
+    in_code_block = False
+
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_code_block = not in_code_block
+
+        if not in_code_block and stripped.startswith("#"):
+            if current:
+                section = "\n".join(current).strip()
+                if section:
+                    sections.append((current_title, section))
+                current = []
+            current_title = stripped.lstrip("#").strip() or None
+
+        current.append(line)
+
+    if current:
+        section = "\n".join(current).strip()
+        if section:
+            sections.append((current_title, section))
+
+    return sections
+
+
+def _split_paragraphs(text: str) -> list[str]:
+    """Split text by blank lines into paragraphs."""
+    paragraphs = []
+    current: list[str] = []
+    for line in text.splitlines():
+        if line.strip():
+            current.append(line)
+        else:
+            if current:
+                paragraphs.append("\n".join(current).strip())
+                current = []
+    if current:
+        paragraphs.append("\n".join(current).strip())
+    return [p for p in paragraphs if p]
+
+
+def _split_text_by_type(extension: str, content: str) -> list[tuple[Optional[str], str]]:
+    """Split content by document type into base sections."""
+    if extension in ("md", "markdown", "mdx"):
+        return _split_markdown_sections(content)
+
+    if extension in CODE_EXTENSIONS:
+        blocks = _split_paragraphs(content)
+        return [(None, block) for block in blocks]
+
+    if extension in TEXT_EXTENSIONS:
+        paragraphs = _split_paragraphs(content)
+        return [(None, p) for p in paragraphs]
+
+    return [(None, content)]
+
+
+def _split_text_by_strategy(
+    strategy: str, extension: str, content: str
+) -> list[tuple[Optional[str], str]]:
+    """Split content based on configured strategy."""
+    strategy = (strategy or "auto").lower()
+    if strategy == "plain":
+        return [(None, content)]
+    if strategy == "markdown":
+        return _split_markdown_sections(content)
+    if strategy == "code":
+        blocks = _split_paragraphs(content)
+        return [(None, block) for block in blocks]
+    if strategy == "text":
+        paragraphs = _split_paragraphs(content)
+        return [(None, p) for p in paragraphs]
+    return _split_text_by_type(extension, content)
 
 
 @dataclass
@@ -474,7 +564,7 @@ class Rag:
         Path(save_path).parent.mkdir(parents=True, exist_ok=True)
 
         with open(save_path, "w", encoding="utf-8") as f:
-            yaml.dump(self.data.to_dict(), f, default_flow_style=False)
+            yaml.dump(self.data.to_dict(), f, default_flow_style=False, allow_unicode=True)
 
         return True
 
@@ -555,10 +645,14 @@ class Rag:
             Tuple of (joined_results, document_ids)
         """
         if top_k is None:
-            top_k = self.data.top_k
+            if config is not None and getattr(config, "rag_top_k", None):
+                top_k = config.rag_top_k
+            else:
+                top_k = self.data.top_k
 
         # Perform hybrid search
         ids = await self._hybrid_search(query, top_k, config)
+        self.set_last_sources(ids)
 
         # Get documents
         documents = []
@@ -582,18 +676,214 @@ class Rag:
         Returns:
             List of document IDs
         """
+        vector_top_k = getattr(config, "rag_vector_top_k", top_k) if config else top_k
+        bm25_top_k = getattr(config, "rag_bm25_top_k", top_k) if config else top_k
+        candidate_k = getattr(config, "rag_candidate_k", top_k) if config else top_k
+        file_cap = getattr(config, "rag_file_cap", 0) if config else 0
+        section_cap = getattr(config, "rag_section_cap", 0) if config else 0
+        rerank_top_k = getattr(config, "rag_rerank_top_k", top_k) if config else top_k
+        parent_min = getattr(config, "rag_parent_min_tokens", 0) if config else 0
+        parent_max = getattr(config, "rag_parent_max_tokens", 0) if config else 0
+
         # Vector search
-        vector_results = await self._vector_search(query, top_k, 0.0, config)
+        vector_results = await self._vector_search(query, vector_top_k, 0.0, config)
 
         # Keyword search
-        keyword_results = self._keyword_search(query, top_k, 0.0)
+        keyword_results = self._keyword_search(query, bm25_top_k, 0.0)
 
         # Combine using reciprocal rank fusion
-        return self._reciprocal_rank_fusion(
+        rrf_top_k = max(vector_top_k, bm25_top_k, candidate_k * 2)
+        combined = self._reciprocal_rank_fusion(
             [vector_results, keyword_results],
             [1.125, 1.0],
-            top_k,
+            rrf_top_k,
         )
+
+        candidates = self._apply_coverage_caps(
+            combined,
+            candidate_k,
+            file_cap,
+            section_cap,
+        )
+
+        reranked = await self._rerank_candidates(query, candidates, rerank_top_k, config)
+
+        if parent_max:
+            return self._expand_with_parents(reranked, parent_min, parent_max)
+
+        return reranked
+
+    def _apply_coverage_caps(
+        self,
+        candidates: list[DocumentId],
+        candidate_k: int,
+        file_cap: int,
+        section_cap: int,
+    ) -> list[DocumentId]:
+        """Apply per-file and per-section caps to candidates."""
+        results: list[DocumentId] = []
+        file_counts: dict[int, int] = {}
+        section_counts: dict[tuple[int, str], int] = {}
+
+        for doc_id in candidates:
+            file_id, _ = doc_id.split()
+            if file_cap > 0 and file_counts.get(file_id, 0) >= file_cap:
+                continue
+
+            doc = self.data.get(doc_id)
+            section = None
+            if doc and isinstance(doc.metadata, dict):
+                section = doc.metadata.get("section")
+
+            if section and section_cap > 0:
+                key = (file_id, section)
+                if section_counts.get(key, 0) >= section_cap:
+                    continue
+
+            results.append(doc_id)
+            file_counts[file_id] = file_counts.get(file_id, 0) + 1
+            if section:
+                key = (file_id, section)
+                section_counts[key] = section_counts.get(key, 0) + 1
+
+            if len(results) >= candidate_k:
+                break
+
+        return results
+
+    async def _rerank_candidates(
+        self,
+        query: str,
+        candidates: list[DocumentId],
+        top_k: int,
+        config: Any = None,
+    ) -> list[DocumentId]:
+        """Rerank candidates using reranker model if available."""
+        if not candidates:
+            return []
+
+        reranker_model_id = None
+        if config and getattr(config, "rag_reranker_model", None):
+            reranker_model_id = config.rag_reranker_model
+        elif self.data.reranker_model:
+            reranker_model_id = self.data.reranker_model
+
+        if not reranker_model_id or config is None:
+            return candidates[:top_k]
+
+        client = await self._get_rerank_client(config, reranker_model_id)
+        if client is None:
+            return candidates[:top_k]
+
+        documents = []
+        for doc_id in candidates:
+            doc = self.data.get(doc_id)
+            documents.append(doc.page_content if doc else "")
+
+        try:
+            from ..client import RerankData
+            data = RerankData(
+                query=query,
+                documents=documents,
+                top_n=top_k,
+                model=client.model.real_name(),
+            )
+            results = await client.rerank(data)
+        except Exception as e:
+            print(f"Warning: rerank failed: {e}")
+            return candidates[:top_k]
+
+        if not results:
+            return candidates[:top_k]
+
+        ranked = sorted(
+            results, key=lambda r: r.get("relevance_score", 0), reverse=True
+        )
+        reranked_ids = [
+            candidates[item["index"]]
+            for item in ranked
+            if 0 <= item.get("index", -1) < len(candidates)
+        ]
+
+        return reranked_ids[:top_k]
+
+    def _expand_with_parents(
+        self,
+        doc_ids: list[DocumentId],
+        min_tokens: int,
+        max_tokens: int,
+    ) -> list[DocumentId]:
+        """Expand hits with adjacent chunks within token budget."""
+        if not doc_ids:
+            return []
+
+        results: list[DocumentId] = []
+        seen: set[DocumentId] = set()
+        total_tokens = 0
+
+        for doc_id in doc_ids:
+            file_id, doc_index = doc_id.split()
+            file = self.data.files.get(file_id)
+            if not file:
+                continue
+
+            neighbors = []
+            if doc_index - 1 >= 0:
+                neighbors.append(DocumentId(file_id, doc_index - 1))
+            neighbors.append(doc_id)
+            if doc_index + 1 < len(file.documents):
+                neighbors.append(DocumentId(file_id, doc_index + 1))
+
+            for neighbor_id in neighbors:
+                if neighbor_id in seen:
+                    continue
+                doc = self.data.get(neighbor_id)
+                if not doc:
+                    continue
+                doc_tokens = estimate_token_length(doc.page_content)
+                if max_tokens and total_tokens + doc_tokens > max_tokens:
+                    continue
+                results.append(neighbor_id)
+                seen.add(neighbor_id)
+                total_tokens += doc_tokens
+
+            if max_tokens and total_tokens >= max_tokens:
+                break
+
+        if min_tokens and total_tokens < min_tokens:
+            return results
+
+        return results
+
+    async def _get_rerank_client(self, config: Any, model_id: str) -> Optional[Any]:
+        """Get rerank client from config."""
+        if ":" in model_id:
+            provider, model_name = model_id.split(":", 1)
+        else:
+            provider = "openai"
+            model_name = model_id
+
+        client_config = config.get_client_config(provider)
+        if not client_config:
+            return None
+
+        api_key = client_config.get("api_key", "")
+
+        model = None
+        if hasattr(config, "resolve_model"):
+            try:
+                model = await config.resolve_model(model_id)
+            except Exception:
+                model = None
+
+        if model is None:
+            from ..client import Model
+            model = Model.new(provider, model_name)
+
+        api_base = model.api_base() or client_config.get("api_base")
+
+        from ..llm import create_client
+        return await create_client(provider, api_key, model, api_base)
 
     async def _vector_search(
         self, query: str, top_k: int, min_score: float, config: Any = None
@@ -673,11 +963,20 @@ class Rag:
             return None
 
         api_key = client_config.get("api_key", "")
-        api_base = client_config.get("api_base")
 
-        # Create model
-        from ..client import Model
-        model = Model.new(provider, model_name)
+        # Create model (prefer config-defined model for per-model overrides)
+        model = None
+        if hasattr(config, "resolve_model"):
+            try:
+                model = await config.resolve_model(embedding_model_id)
+            except Exception:
+                model = None
+
+        if model is None:
+            from ..client import Model
+            model = Model.new(provider, model_name)
+
+        api_base = model.api_base() or client_config.get("api_base")
 
         # Create client
         from ..llm import create_client
@@ -710,6 +1009,15 @@ class Rag:
         if client is None:
             raise ValueError("Could not create embedding client")
 
+        # Resolve embedding model for token limit hints
+        embedding_model_id = config.rag_embedding_model or self.data.embedding_model
+        embedding_model = None
+        if embedding_model_id and hasattr(config, "resolve_model"):
+            try:
+                embedding_model = await config.resolve_model(embedding_model_id)
+            except Exception:
+                embedding_model = None
+
         processed = 0
         next_file_id = self.data.next_file_id
 
@@ -731,26 +1039,52 @@ class Rag:
 
             # Split into chunks
             extension = path.suffix.lstrip(".")
+            effective_chunk_size = (
+                config.rag_chunk_size if config and getattr(config, "rag_chunk_size", None)
+                else self.data.chunk_size
+            )
+            effective_chunk_overlap = (
+                config.rag_chunk_overlap if config and getattr(config, "rag_chunk_overlap", None)
+                else self.data.chunk_overlap
+            )
+            if embedding_model is not None:
+                max_tokens = embedding_model.max_tokens_per_chunk() or embedding_model.max_input_tokens()
+                if max_tokens and max_tokens < effective_chunk_size:
+                    effective_chunk_size = max_tokens
+
             splitter = RecursiveCharacterTextSplitter.from_extension(
                 extension,
-                self.data.chunk_size,
-                self.data.chunk_overlap,
+                effective_chunk_size,
+                effective_chunk_overlap,
             )
 
             from .splitter.mod import RagDocument as SplitterDoc, SplitterChunkHeaderOptions
-            chunks = splitter.split_text(content)
+            split_strategy = (
+                config.rag_split_strategy
+                if config and getattr(config, "rag_split_strategy", None)
+                else "auto"
+            )
+            base_sections = _split_text_by_strategy(split_strategy, extension, content)
+
+            chunks: list[tuple[Optional[str], str]] = []
+            for section_title, text in base_sections:
+                for chunk in splitter.split_text(text):
+                    chunks.append((section_title, chunk))
 
             if not chunks:
                 continue
 
             # Create RagDocuments
-            documents = [RagDocument(page_content=chunk) for chunk in chunks]
+            documents = [
+                RagDocument(page_content=chunk, metadata={"section": section_title})
+                for section_title, chunk in chunks
+            ]
 
             # Generate embeddings
             try:
                 from ..client import EmbeddingsData
                 data = EmbeddingsData(
-                    texts=chunks,
+                    texts=[chunk for _, chunk in chunks],
                     query=False,
                     input_type="passage",
                     truncate="NONE"

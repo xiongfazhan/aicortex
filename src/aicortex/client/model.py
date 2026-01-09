@@ -57,6 +57,12 @@ class ModelData:
     default_chunk_size: Optional[int] = None
     max_batch_size: Optional[int] = None
 
+    # Optional per-model API base override
+    api_base: Optional[str] = None
+
+    # Optional per-model rerank URL override (full endpoint)
+    rerank_url: Optional[str] = None
+
     @classmethod
     def new(cls, name: str) -> "ModelData":
         """Create new model data with default values."""
@@ -112,6 +118,14 @@ class Model:
     def patch(self) -> Optional[dict]:
         """Get the request patch configuration."""
         return self.data.patch
+
+    def api_base(self) -> Optional[str]:
+        """Get per-model API base override if provided."""
+        return self.data.api_base
+
+    def rerank_url(self) -> Optional[str]:
+        """Get per-model rerank URL override if provided."""
+        return self.data.rerank_url
 
     def max_input_tokens(self) -> Optional[int]:
         """Get max input tokens."""

@@ -235,7 +235,7 @@ class RecursiveCharacterTextSplitter:
                     good_splits = []
 
                 if not new_separators:
-                    final_chunks.append(s)
+                    final_chunks.extend(self._split_by_length(s))
                 else:
                     other_info = self._split_text_impl(s, new_separators, keep_separator)
                     final_chunks.extend(other_info)
@@ -245,6 +245,18 @@ class RecursiveCharacterTextSplitter:
             final_chunks.extend(merged_text)
 
         return final_chunks
+
+    def _split_by_length(self, text: str) -> list[str]:
+        """Split oversized text by length when no separators are available."""
+        if self.length_function(text) <= self.chunk_size:
+            return [text]
+
+        overlap = min(self.chunk_overlap, max(self.chunk_size - 1, 0))
+        step = max(self.chunk_size - overlap, 1)
+        chunks = []
+        for i in range(0, len(text), step):
+            chunks.append(text[i : i + self.chunk_size])
+        return [c for c in chunks if c]
 
     def _merge_splits(self, splits: list[str], separator: str) -> list[str]:
         """Merge splits into appropriately sized chunks.

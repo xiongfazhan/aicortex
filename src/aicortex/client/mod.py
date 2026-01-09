@@ -85,6 +85,7 @@ class EmbeddingsData:
     model: Optional[str] = None
     input_type: Optional[str] = None  # For NIM: 'query' or 'passage'
     truncate: Optional[str] = None  # For NIM: 'NONE' or 'END'
+    encoding_format: Optional[str] = None  # For NIM/OpenAI: 'float'
 
 
 @dataclass

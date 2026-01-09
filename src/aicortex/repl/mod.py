@@ -427,10 +427,31 @@ class Repl:
             else:
                 print(_msg("没有可用的会话信息", "No session info available"))
         elif args == "rag":
-            if hasattr(self.config, "rag_info"):
-                print(self.config.rag_info())
+            if not (StateFlags.RAG in self.state and self.config.rag):
+                print(_msg("没有活动的 RAG", "No active RAG"))
+                return
+            rag = self.config.rag
+            info = rag.export()
+            if _is_chinese():
+                print(f"RAG: {rag.name}")
+                print(f"路径: {info.get('path', 'N/A')}")
+                print(f"嵌入模型: {info.get('embedding_model', 'N/A')}")
+                print(f"重排序模型: {info.get('reranker_model', 'N/A')}")
+                print(f"块大小: {info.get('chunk_size', 'N/A')}")
+                print(f"块重叠: {info.get('chunk_overlap', 'N/A')}")
+                print(f"Top K: {info.get('top_k', 'N/A')}")
+                print(f"文件数: {len(info.get('files', []))}")
+                print(f"文档数: {sum(f.get('num_chunks', 0) for f in info.get('files', []))}")
             else:
-                print(_msg("没有可用的 RAG 信息", "No RAG info available"))
+                print(f"RAG: {rag.name}")
+                print(f"Path: {info.get('path', 'N/A')}")
+                print(f"Embedding Model: {info.get('embedding_model', 'N/A')}")
+                print(f"Reranker Model: {info.get('reranker_model', 'N/A')}")
+                print(f"Chunk Size: {info.get('chunk_size', 'N/A')}")
+                print(f"Chunk Overlap: {info.get('chunk_overlap', 'N/A')}")
+                print(f"Top K: {info.get('top_k', 'N/A')}")
+                print(f"Files: {len(info.get('files', []))}")
+                print(f"Documents: {sum(f.get('num_chunks', 0) for f in info.get('files', []))}")
         elif args == "agent":
             if not (StateFlags.AGENT in self.state and self.config.agent):
                 print(_msg("没有活动的 Agent", "No active agent"))
@@ -599,8 +620,24 @@ class Repl:
             if hasattr(self.config, "session") and self.config.session:
                 messages = self.config.session.messages
 
+            # RAG search if enabled
+            user_text = text
+            if StateFlags.RAG in self.state and hasattr(self.config, "rag") and self.config.rag:
+                try:
+                    rag_context, doc_ids = await self.config.rag.search(text, config=self.config)
+                    if rag_context:
+                        # Add RAG context as system message
+                        messages.append(Message.new(
+                            MessageRole.SYSTEM,
+                            f"参考以下文档内容回答问题：\n\n{rag_context}"
+                        ))
+                        # Store sources for .sources command
+                        self.config.rag.set_last_sources(doc_ids)
+                except Exception as e:
+                    print(f"\x1b[33mRAG 搜索失败: {e}\x1b[0m")
+
             # Add current user message
-            messages.append(Message.new(MessageRole.USER, text))
+            messages.append(Message.new(MessageRole.USER, user_text))
 
             # Run chat completion
             print()  # Empty line before response

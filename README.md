@@ -257,8 +257,8 @@ clients:
         max_input_tokens: 8192
 
 # RAG configuration (using NVIDIA NIM - free)
-rag_embedding_model: nim:nvidia/nv-embedqa-e5-v5
-rag_reranker_model: nim:nvidia/nv-rerankqa-mistral-4b-v3
+rag_embedding_model: nim:nvidia/llama-3.2-nv-embedqa-1b-v2
+rag_reranker_model: nim:nvidia/llama-3.2-nv-rerankqa-1b-v2
 rag_top_k: 5
 
 # Appearance
@@ -307,9 +307,10 @@ aicortex --rag my-docs "What does the documentation say about X?"
 
 ```yaml
 # Using NVIDIA NIM (recommended, free)
-rag_embedding_model: nim:nvidia/nv-embedqa-e5-v5
-rag_reranker_model: nim:nvidia/nv-rerankqa-mistral-4b-v3
+rag_embedding_model: nim:nvidia/llama-3.2-nv-embedqa-1b-v2
+rag_reranker_model: nim:nvidia/llama-3.2-nv-rerankqa-1b-v2
 # Or use other providers:
+# rag_embedding_model: nim:nvidia/nv-embedqa-e5-v5  # lightweight
 # rag_embedding_model: openai:text-embedding-ada-002
 # rag_reranker_model: cohere:rerank-english-v2.0
 rag_top_k: 5

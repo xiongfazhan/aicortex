@@ -160,6 +160,9 @@ async def create_client(
         "api_key": api_key,
     }
 
+    if not api_base:
+        api_base = model.api_base()
+
     if api_base:
         config["api_base"] = api_base
 

@@ -88,11 +88,15 @@ class OpenAICompatibleClient(OpenAIClient):
 
         # Determine endpoint based on provider
         if self.client_name in ("nim", "nvidia"):
-            # NIM uses special endpoint: ai.api.nvidia.com/v1/retrieval/{model}/reranking
-            model_name = data.model or self.model.real_name()
-            # Replace . with _ in model name for URL
-            model_url_name = model_name.replace(".", "_").replace("/", "/")
-            endpoint = f"https://ai.api.nvidia.com/v1/retrieval/{model_url_name}/reranking"
+            # Allow per-model override for NIM rerank endpoint
+            if self.model.rerank_url():
+                endpoint = self.model.rerank_url()
+            else:
+                # NIM uses special endpoint: ai.api.nvidia.com/v1/retrieval/{model}/reranking
+                model_name = data.model or self.model.real_name()
+                # Replace . with _ in model name for URL
+                model_url_name = model_name.replace(".", "_").replace("/", "/")
+                endpoint = f"https://ai.api.nvidia.com/v1/retrieval/{model_url_name}/reranking"
         elif self.client_name.startswith("ernie"):
             endpoint = f"{api_base}/rerankers"
         else:
@@ -119,6 +123,12 @@ class OpenAICompatibleClient(OpenAIClient):
             result["results"] = result["data"]
 
         return result.get("results", [])
+
+    async def embeddings(self, data: EmbeddingsData) -> list[list[float]]:
+        """Perform embeddings request with provider-specific tweaks."""
+        if self.client_name in ("nim", "nvidia") and not data.encoding_format:
+            data.encoding_format = "float"
+        return await super().embeddings(data)
 
     def _build_rerank_body(self, data: RerankData) -> dict:
         """Build rerank request body.
