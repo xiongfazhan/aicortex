@@ -110,6 +110,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+AGENTS.md
+CLAUDE.md
+.claude/
 
 # Spyder project settings
 .spyderproject
