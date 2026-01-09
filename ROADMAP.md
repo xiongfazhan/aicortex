@@ -41,59 +41,59 @@
 
 **基本命令（6个）**:
 ```bash
-.help                  # 显示帮助
-.info                  # 显示系统信息
-.model [name]           # 查看/切换模型
-.role [name]            # 切换角色
-.set key=value         # 设置参数
-.language [zh|en|auto]  # 切换语言 ✨
-.exit                  # 退出
+/help                  # 显示帮助
+/info                  # 显示系统信息
+/model [name]           # 查看/切换模型
+/role [name]            # 切换角色
+/set key=value         # 设置参数
+/language [zh|en|auto]  # 切换语言 ✨
+/exit                  # 退出
 ```
 
 **角色命令（6个）**:
 ```bash
-.prompt [text]          # 临时角色提示
-.role [name]            # 切换角色
-.info role             # 显示角色信息
-.edit role             # 修改角色
-.save role             # 保存角色
-.exit role             # 退出角色模式
+/prompt [text]          # 临时角色提示
+/role [name]            # 切换角色
+/info role             # 显示角色信息
+/edit role             # 修改角色
+/save role             # 保存角色
+/exit role             # 退出角色模式
 ```
 
 **会话命令（6个）**:
 ```bash
-.session [name]         # 启动/切换会话
-.empty session         # 清空会话
-.compress session      # 压缩会话
-.info session          # 会话信息
-.edit session          # 编辑会话
-.save session          # 保存会话
+/session [name]         # 启动/切换会话
+/empty session         # 清空会话
+/compress session      # 压缩会话
+/info session          # 会话信息
+/edit session          # 编辑会话
+/save session          # 保存会话
 ```
 
 **RAG 命令（6个）**:
 ```bash
-.rag [name]             # 启动 RAG
-.edit rag-docs          # 编辑文档
-.rebuild rag            # 重建索引
-.sources rag            # 显示来源
-.info rag               # RAG 信息
-.exit rag               # 退出 RAG
+/rag [name]             # 启动 RAG
+/edit rag-docs          # 编辑文档
+/rebuild rag            # 重建索引
+/sources rag            # 显示来源
+/info rag               # RAG 信息
+/exit rag               # 退出 RAG
 ```
 
 **输入命令（4个）**:
 ```bash
-.file <path>            # 包含文件
-.continue               # 继续生成
-.regenerate             # 重新生成
-.copy                   # 复制响应
+/file <path>            # 包含文件
+/continue               # 继续生成
+/regenerate             # 重新生成
+/copy                   # 复制响应
 ```
 
 **Agent 命令（4个）**:
 ```bash
-.agent [name]            # 启动 Agent
-.starter [num|text]      # 设置启动提示
-.edit agent-config      # 编辑 Agent 配置
-.info agent             # Agent 信息
+/agent [name]            # 启动 Agent
+/starter [num|text]      # 设置启动提示
+/edit agent-config      # 编辑 Agent 配置
+/info agent             # Agent 信息
 ```
 
 #### 3. RAG 知识检索（100%）
@@ -191,13 +191,13 @@ EOF
 aicortex
 
 # 切换到中文界面
-> .language zh
+> /language zh
 
 # 查看帮助
-> .help
+> /help
 
 # 切换模型
-> .model claude:claude-3-5-sonnet-20241022
+> /model claude:claude-3-5-sonnet-20241022
 
 # 开始对话
 > 你好，请介绍一下 Python 的异步编程
@@ -211,93 +211,93 @@ aicortex
 
 ```bash
 # 查看所有角色
-> .role
+> /role
 
 # 切换到程序员角色
-> .role programmer
+> /role programmer
 
 # 查看当前角色信息
-> .info role
+> /info role
 
 # 编辑当前角色
-> .edit role
+> /edit role
 # 进入编辑模式，输入新的角色定义
 # 按 Ctrl+D 结束
 
 # 保存角色
-> .save role
+> /save role
 
 # 退出角色模式
-> .exit role
+> /exit role
 ```
 
 ### 2. 会话管理使用
 
 ```bash
 # 创建新会话
-> .session my-project
+> /session my-project
 
 # 在会话中对话
 > 请帮我设计一个 RESTful API
 
 # 清空会话历史
-> .empty session
+> /empty session
 
 # 压缩会话（总结历史对话）
-> .compress session
+> /compress session
 
 # 查看会话信息
-> .info session
+> /info session
 
 # 保存会话
-> .save session
+> /save session
 
 # 退出会话
-> .exit session
+> /exit session
 ```
 
 ### 3. RAG 知识检索使用
 
 ```bash
 # 初始化 RAG
-> .rag my-docs
+> /rag my-docs
 
 # 添加文档
-> .edit rag-docs --add README.md docs/*.md
+> /edit rag-docs --add README.md docs/*.md
 
 # 列出所有文档
-> .edit rag-docs --list
+> /edit rag-docs --list
 
 # 重建索引
-> .rebuild rag
+> /rebuild rag
 
 # 提问（会自动检索相关文档）
 > 这个项目的主要功能是什么？
 
 # 查看引用来源
-> .sources rag
+> /sources rag
 
 # 删除文档
-> .edit rag-docs --remove 1
+> /edit rag-docs --remove 1
 ```
 
 ### 4. Agent 智能体使用
 
 ```bash
 # 启动 Agent
-> .agent code-reviewer
+> /agent code-reviewer
 
 # 查看对话启动器
-> .starter
+> /starter
 
 # 使用启动器
-> .starter 1
+> /starter 1
 
 # 编辑 Agent 配置
-> .edit agent-config
+> /edit agent-config
 
 # 查看 Agent 信息
-> .info agent
+> /info agent
 ```
 
 ### 5. 宏系统使用
@@ -309,39 +309,39 @@ cat > ~/.config/aicortex/macros/review.yaml << EOF
 name: review
 description: 代码审查流程
 commands:
-  - command: .role programmer
+  - command: /role programmer
   - command: 请审查以下代码
-  - command: .file
+  - command: /file
 EOF
 
 # 执行宏
-> .macro review
+> /macro review
 
 # 查看所有宏
-> .macro
+> /macro
 ```
 
 ### 6. 文件操作使用
 
 ```bash
 # 读取文件到对话
-> .file src/main.py
+> /file src/main.py
 
 # 复制上一次响应
-> .copy
+> /copy
 
 # 继续生成
-> .continue
+> /continue
 
 # 重新生成
-> .regenerate
+> /regenerate
 ```
 
 ### 7. 函数调用使用
 
 ```bash
 # 启动会话
-> .session test
+> /session test
 
 # 让 AI 执行命令（会自动调用函数）
 > 列出当前目录的文件
@@ -653,19 +653,19 @@ aicortex --test-client openai
 ### Q1: 如何切换模型？
 
 ```bash
-> .model                 # 查看当前模型
-> .model claude:gpt-4o   # 切换到 GPT-4o
-> .model deepseek:chat    # 切换到 DeepSeek
+> /model                 # 查看当前模型
+> /model claude:gpt-4o   # 切换到 GPT-4o
+> /model deepseek:chat    # 切换到 DeepSeek
 ```
 
 ### Q2: 如何创建自定义角色？
 
 ```bash
 # 方式 1: 交互式创建
-> .role my-role
-> .edit role
+> /role my-role
+> /edit role
 # 输入角色定义
-> .save role
+> /save role
 
 # 方式 2: 直接创建文件
 cat > ~/.config/aicortex/roles/my-role.md << EOF
@@ -678,14 +678,14 @@ EOF
 
 ```bash
 # 1. 重建索引
-> .rebuild rag
+> /rebuild rag
 
 # 2. 添加更多相关文档
-> .edit rag-docs --add more-docs/
+> /edit rag-docs --add more-docs/
 
 # 3. 调整检索参数
-> .set rag_top_k=10
-> .set rag_threshold=0.7
+> /set rag_top_k=10
+> /set rag_threshold=0.7
 ```
 
 ### Q4: 如何启用函数调用？
@@ -695,7 +695,7 @@ EOF
 function_calling: true
 
 # 或通过命令
-> .set function_calling=true
+> /set function_calling=true
 ```
 
 ---

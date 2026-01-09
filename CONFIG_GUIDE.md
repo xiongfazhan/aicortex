@@ -405,6 +405,6 @@ aicortex --rag my-docs "文档中关于 X 说了什么？"
 
 # 在 REPL 中使用
 aicortex
-> .rag my-docs
+> /rag my-docs
 > 查询文档内容
 ```

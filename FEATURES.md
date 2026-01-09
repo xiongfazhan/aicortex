@@ -25,26 +25,26 @@
 **最近更新**:
 - ✅ 实现 REPL 双语界面（中英文）✨
   - 所有命令、描述、消息支持双语
-  - `.language` 命令切换语言（zh/en/auto）
+  - `/language` 命令切换语言（zh/en/auto）
   - 自动检测系统语言
-- ✅ 实现 `.copy` 命令（剪贴板支持）
-- ✅ 实现 `.continue` 命令（继续生成）
-- ✅ 实现 `.regenerate` 命令（重新生成）
-- ✅ 实现 `.file` 命令（文件操作）
-- ✅ 实现 `.edit` / `.save` / `.exit` 命令
-- ✅ 实现 `.edit rag-docs` 命令（RAG 文档编辑）
-- ✅ 实现 `.rebuild rag` 命令（重建 RAG 索引）
-- ✅ 实现 `.sources rag` 命令（显示 RAG 来源）
-- ✅ 实现 `.empty session` 命令（清空会话）
-- ✅ 实现 `.compress session` 命令（压缩会话）
-- ✅ 实现 `.agent` 命令（进入 Agent 模式）
-- ✅ 实现 `.edit agent-config` 命令（编辑 Agent 配置）
-- ✅ 实现 `.info agent` 命令（显示 Agent 信息）
-- ✅ 实现 `.starter` 命令（设置启动提示）
+- ✅ 实现 `/copy` 命令（剪贴板支持）
+- ✅ 实现 `/continue` 命令（继续生成）
+- ✅ 实现 `/regenerate` 命令（重新生成）
+- ✅ 实现 `/file` 命令（文件操作）
+- ✅ 实现 `/edit` / `/save` / `/exit` 命令
+- ✅ 实现 `/edit rag-docs` 命令（RAG 文档编辑）
+- ✅ 实现 `/rebuild rag` 命令（重建 RAG 索引）
+- ✅ 实现 `/sources rag` 命令（显示 RAG 来源）
+- ✅ 实现 `/empty session` 命令（清空会话）
+- ✅ 实现 `/compress session` 命令（压缩会话）
+- ✅ 实现 `/agent` 命令（进入 Agent 模式）
+- ✅ 实现 `/edit agent-config` 命令（编辑 Agent 配置）
+- ✅ 实现 `/info agent` 命令（显示 Agent 信息）
+- ✅ 实现 `/starter` 命令（设置启动提示）
 - ✅ 实现工具函数模块（abort_signal, html_to_md, input, loader, render_prompt, request, spinner）
 - ✅ 添加剪贴板工具 (`aicortex/utils/clipboard.py`)
 - ✅ 实现宏系统 (`aicortex/config/macro.py`) ✨
-- ✅ 实现 `.macro` 命令（执行宏）✨
+- ✅ 实现 `/macro` 命令（执行宏）✨
 - ✅ 实现命令执行工具 (`aicortex/utils/command.py`) ✨
 - ✅ 实现 Azure OpenAI 客户端 (`aicortex/client/azure_openai.py`) ✨
 
@@ -91,24 +91,24 @@
 | **总计** | **38** | **38** | **100%** ✅ |
 
 **✅ 新实现的命令**:
-- `.language` - 切换界面语言（中文/英文/自动）✨
-- `.copy` - 复制上一次响应到剪贴板
-- `.continue` - 继续生成
-- `.regenerate` - 重新生成上一次响应
-- `.file` - 读取文件内容
-- `.edit role/session` - 编辑角色/会话
-- `.save role/session` - 保存角色/会话
-- `.exit role/session/rag/agent` - 退出对应模式
-- `.edit rag-docs` - RAG 文档编辑（--list, --add, --remove）
-- `.rebuild rag` - 重建 RAG 索引
-- `.sources rag` - 显示上次查询的引用来源
-- `.empty session` - 清空会话历史
-- `.compress session` - 压缩会话历史
-- `.agent` - 进入 Agent 模式
-- `.edit agent-config` - 编辑 Agent 配置（变量设置）
-- `.info agent` - 显示 Agent 信息
-- `.starter` - 设置/使用启动提示
-- `.macro` - 执行宏（可重用命令序列）✨
+- `/language` - 切换界面语言（中文/英文/自动）✨
+- `/copy` - 复制上一次响应到剪贴板
+- `/continue` - 继续生成
+- `/regenerate` - 重新生成上一次响应
+- `/file` - 读取文件内容
+- `/edit role/session` - 编辑角色/会话
+- `/save role/session` - 保存角色/会话
+- `/exit role/session/rag/agent` - 退出对应模式
+- `/edit rag-docs` - RAG 文档编辑（--list, --add, --remove）
+- `/rebuild rag` - 重建 RAG 索引
+- `/sources rag` - 显示上次查询的引用来源
+- `/empty session` - 清空会话历史
+- `/compress session` - 压缩会话历史
+- `/agent` - 进入 Agent 模式
+- `/edit agent-config` - 编辑 Agent 配置（变量设置）
+- `/info agent` - 显示 Agent 信息
+- `/starter` - 设置/使用启动提示
+- `/macro` - 执行宏（可重用命令序列）✨
 
 ### 4. RAG 系统 (6/6) ✅
 
@@ -196,27 +196,27 @@
 
 #### 阶段 1: REPL 核心命令 ✅
 - [x] 剪贴板工具 (`clipboard.py`)
-- [x] `.copy` 命令
-- [x] `.continue` 命令
-- [x] `.regenerate` 命令
-- [x] `.file` 命令
-- [x] `.edit` / `.save` / `.exit` 基础框架
+- [x] `/copy` 命令
+- [x] `/continue` 命令
+- [x] `/regenerate` 命令
+- [x] `/file` 命令
+- [x] `/edit` / `/save` / `/exit` 基础框架
 
 #### 阶段 2: RAG 高级功能 ✅
-- [x] `.edit rag-docs` 实现
-- [x] `.rebuild rag` 实现
-- [x] `.sources rag` 实现
+- [x] `/edit rag-docs` 实现
+- [x] `/rebuild rag` 实现
+- [x] `/sources rag` 实现
 - [x] RAG 文档编辑模式
 
 #### 阶段 3: 会话管理增强 ✅
-- [x] `.empty session` 实现
-- [x] `.compress session` 实现
+- [x] `/empty session` 实现
+- [x] `/compress session` 实现
 
 #### 阶段 4: Agent 增强功能 ✅
-- [x] `.agent` 命令
-- [x] `.edit agent-config` 命令
-- [x] `.info agent` 命令
-- [x] `.starter` 命令
+- [x] `/agent` 命令
+- [x] `/edit agent-config` 命令
+- [x] `/info agent` 命令
+- [x] `/starter` 命令
 
 #### 阶段 5: 工具函数完善 ✅
 - [x] `abort_signal.py` - 中断信号
@@ -229,7 +229,7 @@
 
 #### 阶段 6: 宏系统 ✅
 - [x] `macro.py` - 宏定义与展开
-- [x] `.macro` 命令 - 执行宏
+- [x] `/macro` 命令 - 执行宏
 - [x] 变量解析与插值
 - [x] YAML 序列化支持
 
@@ -304,47 +304,47 @@
 
 **注意**: 本文档随开发进度持续更新。
 ```bash
-.edit role           # 编辑当前角色
-.save role           # 保存当前角色
-.info role           # 显示角色信息
-.exit role           # 退出角色编辑模式
+/edit role           # 编辑当前角色
+/save role           # 保存当前角色
+/info role           # 显示角色信息
+/exit role           # 退出角色编辑模式
 ```
 
 #### 会话管理命令 (5 个)
 ```bash
-.empty session       # 清空当前会话
-.compress session    # 压缩会话历史
-.edit session        # 编辑会话
-.save session        # 保存会话
-.exit session        # 退出会话编辑模式
+/empty session       # 清空当前会话
+/compress session    # 压缩会话历史
+/edit session        # 编辑会话
+/save session        # 保存会话
+/exit session        # 退出会话编辑模式
 ```
 
 #### Agent 命令 (4 个)
 ```bash
-.agent               # 进入 Agent 模式
-.edit agent-config   # 编辑 Agent 配置
-.info agent          # 显示 Agent 信息
-.exit agent          # 退出 Agent 模式
+/agent               # 进入 Agent 模式
+/edit agent-config   # 编辑 Agent 配置
+/info agent          # 显示 Agent 信息
+/exit agent          # 退出 Agent 模式
 ```
 
 #### RAG 命令 (4 个)
 ```bash
-.edit rag-docs       # 编辑 RAG 文档
-.rebuild rag         # 重建 RAG 索引
-.sources rag         # 显示 RAG 来源
-.exit rag            # 退出 RAG 模式
+/edit rag-docs       # 编辑 RAG 文档
+/rebuild rag         # 重建 RAG 索引
+/sources rag         # 显示 RAG 来源
+/exit rag            # 退出 RAG 模式
 ```
 
 #### 实用命令 (8 个)
 ```bash
-.macro               # 执行宏
-.file                # 读取文件内容
-.continue            # 继续生成
-.regenerate          # 重新生成
-.copy                # 复制到剪贴板
-.delete              # 删除配置项
-.starter             # 设置启动提示
-.edit config         # 编辑配置文件
+/macro               # 执行宏
+/file                # 读取文件内容
+/continue            # 继续生成
+/regenerate          # 重新生成
+/copy                # 复制到剪贴板
+/delete              # 删除配置项
+/starter             # 设置启动提示
+/edit config         # 编辑配置文件
 ```
 
 ### 优先级 2: 工具函数 (9 个)
@@ -386,17 +386,17 @@
 **文件**: `aicortex/repl/mod.py`
 
 - [ ] 实现编辑模式框架
-- [ ] `.edit role` / `.save role` / `.exit role`
-- [ ] `.edit session` / `.save session` / `.exit session`
-- [ ] `.edit config` / `.info` 增强版
-- [ ] `.continue` / `.regenerate`
+- [ ] `/edit role` / `/save role` / `/exit role`
+- [ ] `/edit session` / `/save session` / `/exit session`
+- [ ] `/edit config` / `/info` 增强版
+- [ ] `/continue` / `/regenerate`
 
 ### 阶段 2: 文件操作和剪贴板 (预计 1-2 天)
 
 **文件**: `aicortex/utils/clipboard.py`, `aicortex/utils/command.py`
 
-- [ ] `.file` 命令
-- [ ] `.copy` 命令
+- [ ] `/file` 命令
+- [ ] `/copy` 命令
 - [ ] 剪贴板工具函数
 - [ ] Shell 命令执行
 
@@ -404,19 +404,19 @@
 
 **文件**: `aicortex/repl/mod.py`, `aicortex/rag/mod.py`
 
-- [ ] `.edit rag-docs`
-- [ ] `.rebuild rag`
-- [ ] `.sources rag`
+- [ ] `/edit rag-docs`
+- [ ] `/rebuild rag`
+- [ ] `/sources rag`
 - [ ] RAG 编辑模式
 
 ### 阶段 4: Agent 和会话增强 (预计 1-2 天)
 
 **文件**: `aicortex/repl/mod.py`
 
-- [ ] `.agent` 命令
-- [ ] `.edit agent-config` / `.info agent` / `.exit agent`
-- [ ] `.empty session` / `.compress session`
-- [ ] `.starter` 命令
+- [ ] `/agent` 命令
+- [ ] `/edit agent-config` / `/info agent` / `/exit agent`
+- [ ] `/empty session` / `/compress session`
+- [ ] `/starter` 命令
 
 ### 阶段 5: 工具函数完善 (预计 2-3 天)
 
@@ -452,7 +452,7 @@
 
 - [ ] 宏定义语法
 - [ ] 宏展开引擎
-- [ ] `.macro` 命令
+- [ ] `/macro` 命令
 
 ---
 
@@ -461,18 +461,18 @@
 ### 已实现的 REPL 命令 (11 个)
 
 ```bash
-.help                 # 显示帮助
-.info                 # 显示配置信息
-.model                # 显示/设置模型
-.prompt               # 设置提示
-.role                 # 使用角色
-.info role            # 角色信息
-.session              # 使用会话
-.info session         # 会话信息
-.rag                  # 使用 RAG
-.info rag             # RAG 信息
-.set                  # 设置配置项
-.exit                 # 退出 REPL
+/help                 # 显示帮助
+/info                 # 显示配置信息
+/model                # 显示/设置模型
+/prompt               # 设置提示
+/role                 # 使用角色
+/info role            # 角色信息
+/session              # 使用会话
+/info session         # 会话信息
+/rag                  # 使用 RAG
+/info rag             # RAG 信息
+/set                  # 设置配置项
+/exit                 # 退出 REPL
 ```
 
 ### 待实现的 REPL 命令 (25 个)

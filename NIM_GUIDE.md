@@ -109,8 +109,8 @@ aicortex "你好"
 aicortex
 
 # 在 REPL 中切换模型
-> .model nim:meta/llama-3.1-405b-instruct
-> .model nim:meta/codellama-70b-instruct
+> /model nim:meta/llama-3.1-405b-instruct
+> /model nim:meta/codellama-70b-instruct
 ```
 
 ### 编程任务

@@ -75,11 +75,12 @@ def _msg(zh: str, en: str) -> str:
 
 try:
     from prompt_toolkit import PromptSession
-    from prompt_toolkit.completion import WordCompleter
+    from prompt_toolkit.completion import Completion, Completer
     from prompt_toolkit.history import FileHistory
     from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
     from prompt_toolkit.key_binding import KeyBindings
     from prompt_toolkit.formatted_text import HTML
+    from prompt_toolkit.styles import Style
     PROMPT_TOOLKIT_AVAILABLE = True
 except ImportError:
     PROMPT_TOOLKIT_AVAILABLE = False
@@ -104,7 +105,7 @@ class ReplCommand:
     """A REPL command.
 
     Attributes:
-        name: Command name (e.g., ".help")
+        name: Command name (e.g., "/help")
         description: Command description (English)
         description_zh: Command description (Chinese)
         state_validator: Function to validate if command is available
@@ -145,36 +146,36 @@ class Repl:
 
     # All REPL commands
     COMMANDS: list[ReplCommand] = [
-        ReplCommand(".help", "Show this help guide", "显示此帮助指南"),
-        ReplCommand(".info", "Show system info", "显示系统信息"),
-        ReplCommand(".model", "Switch LLM model", "切换 LLM 模型"),
-        ReplCommand(".prompt", "Set a temporary role using a prompt", "使用提示设置临时角色"),
-        ReplCommand(".role", "Create or switch to a role", "创建或切换角色"),
-        ReplCommand(".info role", "Show role info", "显示角色信息", lambda f: StateFlags.ROLE in f),
-        ReplCommand(".edit role", "Modify current role", "修改当前角色"),
-        ReplCommand(".save role", "Save current role to file", "保存当前角色到文件"),
-        ReplCommand(".exit role", "Exit active role", "退出当前角色"),
-        ReplCommand(".session", "Start or switch to a session", "启动或切换会话"),
-        ReplCommand(".empty session", "Clear session messages", "清空会话消息"),
-        ReplCommand(".compress session", "Compress session messages", "压缩会话消息"),
-        ReplCommand(".info session", "Show session info", "显示会话信息"),
-        ReplCommand(".edit session", "Modify current session", "修改当前会话"),
-        ReplCommand(".save session", "Save current session to file", "保存当前会话到文件"),
-        ReplCommand(".exit session", "Exit active session", "退出当前会话"),
-        ReplCommand(".rag", "Initialize or access RAG", "初始化或访问 RAG"),
-        ReplCommand(".edit rag-docs", "Add or remove documents from RAG", "添加或删除 RAG 文档"),
-        ReplCommand(".rebuild rag", "Rebuild RAG for document changes", "重建 RAG（文档更改后）"),
-        ReplCommand(".sources rag", "Show citation sources used in last query", "显示上次查询的引用来源"),
-        ReplCommand(".info rag", "Show RAG info", "显示 RAG 信息"),
-        ReplCommand(".exit rag", "Leave RAG", "离开 RAG"),
-        ReplCommand(".file", "Include files, directories, or URLs", "包含文件、目录或 URL"),
-        ReplCommand(".continue", "Continue previous response", "继续上一个响应"),
-        ReplCommand(".regenerate", "Regenerate last response", "重新生成上一个响应"),
-        ReplCommand(".copy", "Copy last response", "复制上一个响应"),
-        ReplCommand(".set", "Modify runtime settings", "修改运行时设置"),
-        ReplCommand(".language", "Switch language (zh/en/auto)", "切换语言 (zh/en/auto)"),
-        ReplCommand(".delete", "Delete roles, sessions, or RAGs", "删除角色、会话或 RAG"),
-        ReplCommand(".exit", "Exit REPL", "退出 REPL"),
+        ReplCommand("/help", "Show this help guide", "显示此帮助指南"),
+        ReplCommand("/info", "Show system info", "显示系统信息"),
+        ReplCommand("/model", "Switch LLM model", "切换 LLM 模型"),
+        ReplCommand("/prompt", "Set a temporary role using a prompt", "使用提示设置临时角色"),
+        ReplCommand("/role", "Create or switch to a role", "创建或切换角色"),
+        ReplCommand("/info role", "Show role info", "显示角色信息", lambda f: StateFlags.ROLE in f),
+        ReplCommand("/edit role", "Modify current role", "修改当前角色"),
+        ReplCommand("/save role", "Save current role to file", "保存当前角色到文件"),
+        ReplCommand("/exit role", "Exit active role", "退出当前角色"),
+        ReplCommand("/session", "Start or switch to a session", "启动或切换会话"),
+        ReplCommand("/empty session", "Clear session messages", "清空会话消息"),
+        ReplCommand("/compress session", "Compress session messages", "压缩会话消息"),
+        ReplCommand("/info session", "Show session info", "显示会话信息"),
+        ReplCommand("/edit session", "Modify current session", "修改当前会话"),
+        ReplCommand("/save session", "Save current session to file", "保存当前会话到文件"),
+        ReplCommand("/exit session", "Exit active session", "退出当前会话"),
+        ReplCommand("/rag", "Initialize or access RAG", "初始化或访问 RAG"),
+        ReplCommand("/edit rag-docs", "Add or remove documents from RAG", "添加或删除 RAG 文档"),
+        ReplCommand("/rebuild rag", "Rebuild RAG for document changes", "重建 RAG（文档更改后）"),
+        ReplCommand("/sources rag", "Show citation sources used in last query", "显示上次查询的引用来源"),
+        ReplCommand("/info rag", "Show RAG info", "显示 RAG 信息"),
+        ReplCommand("/exit rag", "Leave RAG", "离开 RAG"),
+        ReplCommand("/file", "Include files, directories, or URLs", "包含文件、目录或 URL"),
+        ReplCommand("/continue", "Continue previous response", "继续上一个响应"),
+        ReplCommand("/regenerate", "Regenerate last response", "重新生成上一个响应"),
+        ReplCommand("/copy", "Copy last response", "复制上一个响应"),
+        ReplCommand("/set", "Modify runtime settings", "修改运行时设置"),
+        ReplCommand("/language", "Switch language (zh/en/auto)", "切换语言 (zh/en/auto)"),
+        ReplCommand("/delete", "Delete roles, sessions, or RAGs", "删除角色、会话或 RAG"),
+        ReplCommand("/exit", "Exit REPL", "退出 REPL"),
     ]
 
     def __init__(
@@ -193,7 +194,7 @@ class Repl:
         self.state = StateFlags(0)
         self.running = True
 
-        # Store last response for .copy and .regenerate
+        # Store last response for /copy and /regenerate
         self.last_response: Optional[str] = None
         self.last_user_input: Optional[str] = None
 
@@ -248,7 +249,60 @@ class Repl:
         if not PROMPT_TOOLKIT_AVAILABLE:
             return None
 
-        completer = WordCompleter([cmd.name for cmd in self.COMMANDS])
+        import shutil
+
+        commands = self.COMMANDS
+
+        def _truncate(text: str, width: int) -> str:
+            if width <= 0:
+                return ""
+            if len(text) <= width:
+                return text
+            if width <= 3:
+                return text[:width]
+            return f"{text[:width - 3]}..."
+
+        def _layout_params() -> tuple[int, int, int, int]:
+            term_width = shutil.get_terminal_size((80, 20)).columns
+            min_width = 44
+            max_width = 96
+            ideal_width = min(72, max(term_width - 4, min_width))
+            menu_width = min(max_width, max(min_width, ideal_width))
+
+            max_cmd_len = max((len(cmd.name) for cmd in commands), default=0)
+            cmd_width = 22 if max_cmd_len <= 22 else min(28, max_cmd_len)
+
+            gap = 3
+            padding = 4  # left+right
+            desc_width = max(0, menu_width - (padding + cmd_width + gap))
+            return menu_width, cmd_width, gap, desc_width
+
+        class CommandCompleter(Completer):
+            def get_completions(self, document, complete_event):
+                text = document.text_before_cursor.lstrip()
+                if not text.startswith("/"):
+                    return
+                _, cmd_width, gap, desc_width = _layout_params()
+                left_pad = "  "
+                right_pad = "  "
+                gap_text = " " * gap
+
+                for cmd in commands:
+                    if cmd.name.startswith(text):
+                        cmd_text = _truncate(cmd.name, cmd_width).ljust(cmd_width)
+                        desc_text = _truncate(cmd.get_description(), desc_width).ljust(desc_width)
+                        display = [
+                            ("class:completion.command", f"{left_pad}{cmd_text}"),
+                            ("class:completion.description", f"{gap_text}{desc_text}{right_pad}"),
+                        ]
+                        yield Completion(
+                            cmd.name,
+                            start_position=-len(text),
+                            display=display,
+                            display_meta="",
+                        )
+
+        completer = CommandCompleter()
         key_bindings = KeyBindings()
 
         @key_bindings.add("c-c")
@@ -258,11 +312,26 @@ class Repl:
 
         history = FileHistory(self.history_file) if self.history_file else None
 
+        style = Style.from_dict({
+            "completion-menu": "bg:#1F2329 #E6E6E6",
+            "completion-menu.completion": "bg:#1F2329",
+            "completion-menu.completion.current": "bg:#2A3038",
+            "completion-menu.border": "bg:#1F2329 #2B3138",
+            "completion.command": "#E6E6E6",
+            "completion.description": "#A9B1BA",
+            "completion-menu.completion.current .completion.command": "#FFFFFF",
+            "completion-menu.completion.current .completion.description": "#C9D1D9",
+            "scrollbar.background": "bg:#2B3138",
+            "scrollbar.button": "bg:#3A424C",
+        })
+
         return PromptSession(
             completer=completer,
             history=history,
             auto_suggest=AutoSuggestFromHistory(),
             key_bindings=key_bindings,
+            style=style,
+            complete_while_typing=True,
         )
 
     async def run(self) -> None:
@@ -272,10 +341,10 @@ class Repl:
         """
         if _is_chinese():
             print("欢迎使用 AICortex")
-            print('输入 ".help" 查看可用命令')
+            print('输入 "/help" 查看可用命令')
         else:
             print("Welcome to AICortex")
-            print('Type ".help" for available commands')
+            print('Type "/help" for available commands')
         print()
 
         session = self._get_session()
@@ -295,7 +364,7 @@ class Repl:
                 await self._handle_input(line)
 
             except KeyboardInterrupt:
-                print("\n(To exit, press Ctrl+D or type '.exit')")
+                print("\n(To exit, press Ctrl+D or type '/exit')")
                 continue
             except EOFError:
                 break
@@ -328,7 +397,7 @@ class Repl:
     def _parse_command(self, line: str) -> tuple[Optional[str], Optional[str]]:
         """Parse a command from input.
 
-        Supports both simple commands (.help) and compound commands (.edit role).
+        Supports both simple commands (/help) and compound commands (/edit role).
 
         Args:
             line: Input line
@@ -336,9 +405,9 @@ class Repl:
         Returns:
             Tuple of (command, args)
         """
-        match = re.match(r"^\s*(\.\S*(?:\s+\S+)?)\s*(.*)$", line)
+        match = re.match(r"^\s*(/\S*(?:\s+\S+)?)\s*(.*)$", line)
         if match:
-            # Check for compound command (e.g., ".edit role")
+            # Check for compound command (e.g., "/edit role")
             full_cmd = match.group(1).strip()
             remaining = match.group(2).strip() or None
 
@@ -362,56 +431,56 @@ class Repl:
             args: Command arguments
         """
         match cmd:
-            case ".help":
+            case "/help":
                 self._dump_help()
-            case ".exit":
+            case "/exit":
                 await self._cmd_exit(args)
-            case ".info":
+            case "/info":
                 await self._cmd_info(args)
-            case ".model":
+            case "/model":
                 await self._cmd_model(args)
-            case ".role":
+            case "/role":
                 await self._cmd_role(args)
-            case ".session":
+            case "/session":
                 await self._cmd_session(args)
-            case ".rag":
+            case "/rag":
                 await self._cmd_rag(args)
-            case ".set":
+            case "/set":
                 await self._cmd_set(args)
-            case ".copy":
+            case "/copy":
                 await self._cmd_copy(args)
-            case ".continue":
+            case "/continue":
                 await self._cmd_continue(args)
-            case ".regenerate":
+            case "/regenerate":
                 await self._cmd_regenerate(args)
-            case ".file":
+            case "/file":
                 await self._cmd_file(args)
-            case ".edit":
+            case "/edit":
                 await self._cmd_edit(args)
-            case ".save":
+            case "/save":
                 await self._cmd_save(args)
-            case ".rebuild":
+            case "/rebuild":
                 await self._cmd_rebuild(args)
-            case ".sources":
+            case "/sources":
                 await self._cmd_sources(args)
-            case ".empty":
+            case "/empty":
                 await self._cmd_empty(args)
-            case ".compress":
+            case "/compress":
                 await self._cmd_compress(args)
-            case ".agent":
+            case "/agent":
                 await self._cmd_agent(args)
-            case ".starter":
+            case "/starter":
                 await self._cmd_starter(args)
-            case ".macro":
+            case "/macro":
                 await self._cmd_macro(args)
-            case ".language":
+            case "/language":
                 await self._cmd_language(args)
             case _:
                 print(_msg(f"未知命令: {cmd}", f"Unknown command: {cmd}"))
-                print(_msg('输入 ".help" 查看可用命令', 'Type ".help" for available commands'))
+                print(_msg('输入 "/help" 查看可用命令', 'Type "/help" for available commands'))
 
     async def _cmd_info(self, args: Optional[str]) -> None:
-        """Handle .info command.
+        """Handle /info command.
 
         Args:
             args: Optional subcommand (role, session, rag, agent)
@@ -477,13 +546,13 @@ class Repl:
             print(f"Python {sys.version}")
 
     async def _cmd_model(self, args: Optional[str]) -> None:
-        """Handle .model command.
+        """Handle /model command.
 
         Args:
             args: Model name or None
         """
         if not args:
-            print(_msg("用法: .model <名称>", "Usage: .model <name>"))
+            print(_msg("用法: /model <名称>", "Usage: /model <name>"))
             return
 
         if hasattr(self.config, "set_model"):
@@ -493,13 +562,13 @@ class Repl:
             print(_msg("模型设置不可用", "Model setting not available"))
 
     async def _cmd_role(self, args: Optional[str]) -> None:
-        """Handle .role command.
+        """Handle /role command.
 
         Args:
             args: Role name or None
         """
         if not args:
-            print(_msg("用法: .role <名称>", "Usage: .role <name>"))
+            print(_msg("用法: /role <名称>", "Usage: /role <name>"))
             return
 
         if hasattr(self.config, "use_role"):
@@ -510,13 +579,13 @@ class Repl:
             print(_msg("角色设置不可用", "Role setting not available"))
 
     async def _cmd_session(self, args: Optional[str]) -> None:
-        """Handle .session command.
+        """Handle /session command.
 
         Args:
             args: Session name or None
         """
         if not args:
-            print(_msg("用法: .session <名称>", "Usage: .session <name>"))
+            print(_msg("用法: /session <名称>", "Usage: /session <name>"))
             return
 
         if hasattr(self.config, "use_session"):
@@ -527,13 +596,21 @@ class Repl:
             print(_msg("会话设置不可用", "Session setting not available"))
 
     async def _cmd_rag(self, args: Optional[str]) -> None:
-        """Handle .rag command.
+        """Handle /rag command.
 
         Args:
             args: RAG name or None
         """
-        if not args:
-            print(_msg("用法: .rag <名称>", "Usage: .rag <name>"))
+        if not args or args.strip().lower() == "help":
+            print(_msg("用法: /rag <名称>", "Usage: /rag <name>"))
+            print(_msg("相关命令:", "Related commands:"))
+            print(_msg("  /edit rag-docs --list            查看文档列表", "  /edit rag-docs --list            List documents"))
+            print(_msg("  /edit rag-docs --add <路径...>   添加文档", "  /edit rag-docs --add <path...>   Add documents"))
+            print(_msg("  /edit rag-docs --remove <ID...>  删除文档", "  /edit rag-docs --remove <id...>  Remove documents"))
+            print(_msg("  /rebuild rag                     重建索引", "  /rebuild rag                     Rebuild index"))
+            print(_msg("  /sources rag                     查看引用来源", "  /sources rag                     Show sources"))
+            print(_msg("  /info rag                        查看 RAG 信息", "  /info rag                        Show RAG info"))
+            print(_msg("  /exit rag                        退出 RAG", "  /exit rag                        Exit RAG"))
             return
 
         if hasattr(self.config, "use_rag"):
@@ -544,17 +621,17 @@ class Repl:
             print(_msg("RAG 设置不可用", "RAG setting not available"))
 
     async def _cmd_set(self, args: Optional[str]) -> None:
-        """Handle .set command.
+        """Handle /set command.
 
         Args:
             args: Setting key=value or None
         """
         if not args:
-            print(_msg("用法: .set <键>=<值>", "Usage: .set <key>=<value>"))
+            print(_msg("用法: /set <键>=<值>", "Usage: /set <key>=<value>"))
             return
 
         if "=" not in args:
-            print(_msg("用法: .set <键>=<值>", "Usage: .set <key>=<value>"))
+            print(_msg("用法: /set <键>=<值>", "Usage: /set <key>=<value>"))
             return
 
         key, value = args.split("=", 1)
@@ -578,7 +655,7 @@ class Repl:
             from ..client import Message, MessageRole
             import os
 
-            # Store user input for .continue and .regenerate
+            # Store user input for /continue and /regenerate
             self.last_user_input = text
 
             # Get current model
@@ -631,7 +708,7 @@ class Repl:
                             MessageRole.SYSTEM,
                             f"参考以下文档内容回答问题：\n\n{rag_context}"
                         ))
-                        # Store sources for .sources command
+                        # Store sources for /sources command
                         self.config.rag.set_last_sources(doc_ids)
                 except Exception as e:
                     print(f"\x1b[33mRAG 搜索失败: {e}\x1b[0m")
@@ -649,7 +726,7 @@ class Repl:
                 top_p=self.config.top_p,
             )
 
-            # Store response for .copy and .regenerate
+            # Store response for /copy and /regenerate
             self.last_response = response
 
             # Update session
@@ -675,65 +752,65 @@ class Repl:
         # Group commands by category (localized)
         if _is_chinese():
             categories = {
-                "基本": [".help", ".info", ".model", ".set", ".exit"],
+                "基本": ["/help", "/info", "/model", "/set", "/exit"],
                 "角色": [
-                    ".prompt",
-                    ".role",
-                    ".info role",
-                    ".edit role",
-                    ".save role",
-                    ".exit role",
+                    "/prompt",
+                    "/role",
+                    "/info role",
+                    "/edit role",
+                    "/save role",
+                    "/exit role",
                 ],
                 "会话": [
-                    ".session",
-                    ".empty session",
-                    ".compress session",
-                    ".info session",
-                    ".edit session",
-                    ".save session",
-                    ".exit session",
+                    "/session",
+                    "/empty session",
+                    "/compress session",
+                    "/info session",
+                    "/edit session",
+                    "/save session",
+                    "/exit session",
                 ],
                 "RAG": [
-                    ".rag",
-                    ".edit rag-docs",
-                    ".rebuild rag",
-                    ".sources rag",
-                    ".info rag",
-                    ".exit rag",
+                    "/rag",
+                    "/edit rag-docs",
+                    "/rebuild rag",
+                    "/sources rag",
+                    "/info rag",
+                    "/exit rag",
                 ],
-                "输入": [".file", ".continue", ".regenerate", ".copy"],
-                "管理": [".delete"],
+                "输入": ["/file", "/continue", "/regenerate", "/copy"],
+                "管理": ["/delete"],
             }
         else:
             categories = {
-                "General": [".help", ".info", ".model", ".set", ".exit"],
+                "General": ["/help", "/info", "/model", "/set", "/exit"],
                 "Role": [
-                    ".prompt",
-                    ".role",
-                    ".info role",
-                    ".edit role",
-                    ".save role",
-                    ".exit role",
+                    "/prompt",
+                    "/role",
+                    "/info role",
+                    "/edit role",
+                    "/save role",
+                    "/exit role",
                 ],
                 "Session": [
-                    ".session",
-                    ".empty session",
-                    ".compress session",
-                    ".info session",
-                    ".edit session",
-                    ".save session",
-                    ".exit session",
+                    "/session",
+                    "/empty session",
+                    "/compress session",
+                    "/info session",
+                    "/edit session",
+                    "/save session",
+                    "/exit session",
                 ],
                 "RAG": [
-                    ".rag",
-                    ".edit rag-docs",
-                    ".rebuild rag",
-                    ".sources rag",
-                    ".info rag",
-                    ".exit rag",
+                    "/rag",
+                    "/edit rag-docs",
+                    "/rebuild rag",
+                    "/sources rag",
+                    "/info rag",
+                    "/exit rag",
                 ],
-                "Input": [".file", ".continue", ".regenerate", ".copy"],
-                "Management": [".delete"],
+                "Input": ["/file", "/continue", "/regenerate", "/copy"],
+                "Management": ["/delete"],
             }
 
         for category, commands in categories.items():
@@ -749,7 +826,7 @@ class Repl:
             print()
 
     async def _cmd_exit(self, args: Optional[str]) -> None:
-        """Handle .exit command.
+        """Handle /exit command.
 
         Args:
             args: Optional subcommand (role, session, rag, agent)
@@ -759,7 +836,7 @@ class Repl:
             self.running = False
             return
 
-        # Handle subcommands: .exit role, .exit session, .exit rag, .exit agent
+        # Handle subcommands: /exit role, /exit session, /exit rag, /exit agent
         match args.split():
             case ["role"]:
                 if StateFlags.ROLE in self.state:
@@ -793,7 +870,7 @@ class Repl:
                 print(_msg(f"未知的退出子命令: {args}", f"Unknown exit subcommand: {args}"))
 
     async def _cmd_copy(self, args: Optional[str]) -> None:
-        """Handle .copy command.
+        """Handle /copy command.
 
         Args:
             args: Optional text to copy (defaults to last response)
@@ -813,13 +890,13 @@ class Repl:
             print(_msg(f"复制失败: {e}", f"Failed to copy: {e}"))
 
     async def _cmd_language(self, args: Optional[str]) -> None:
-        """Handle .language command.
+        """Handle /language command.
 
         Usage:
-            .language           - Show current language setting
-            .language zh        - Switch to Chinese
-            .language en        - Switch to English
-            .language auto      - Use system language detection
+            /language           - Show current language setting
+            /language zh        - Switch to Chinese
+            /language en        - Switch to English
+            /language auto      - Use system language detection
 
         Args:
             args: Language option (zh, en, auto) or None to show current
@@ -828,7 +905,7 @@ class Repl:
             # Show current language setting
             current = _LANGUAGE_SETTING or 'auto'
             print(_msg(f"当前语言: {current}", f"Current language: {current}"))
-            print(_msg("用法: .language [zh|en|auto]", "Usage: .language [zh|en|auto]"))
+            print(_msg("用法: /language [zh|en|auto]", "Usage: /language [zh|en|auto]"))
             return
 
         # Set language
@@ -837,10 +914,10 @@ class Repl:
             print(_msg(f"语言已设置为: {args}", f"Language set to: {args}"))
         except ValueError as e:
             print(_msg(f"错误: {e}", f"Error: {e}"))
-            print(_msg("用法: .language [zh|en|auto]", "Usage: .language [zh|en|auto]"))
+            print(_msg("用法: /language [zh|en|auto]", "Usage: /language [zh|en|auto]"))
 
     async def _cmd_continue(self, args: Optional[str]) -> None:
-        """Handle .continue command.
+        """Handle /continue command.
 
         Continues generating from the last response.
         """
@@ -860,7 +937,7 @@ class Repl:
         self.continuing = False
 
     async def _cmd_regenerate(self, args: Optional[str]) -> None:
-        """Handle .regenerate command.
+        """Handle /regenerate command.
 
         Regenerates the last response.
         """
@@ -881,7 +958,7 @@ class Repl:
         await self._send_to_llm(self.last_user_input)
 
     async def _cmd_file(self, args: Optional[str]) -> None:
-        """Handle .file command.
+        """Handle /file command.
 
         Args:
             args: File path or None to show usage
@@ -889,7 +966,7 @@ class Repl:
         import os
 
         if not args:
-            print(_msg("用法: .file <路径>", "Usage: .file <path>"))
+            print(_msg("用法: /file <路径>", "Usage: /file <path>"))
             print(_msg("在消息中包含文件内容", "Include file contents in your message"))
             return
 
@@ -914,13 +991,13 @@ class Repl:
             print(_msg(f"读取文件错误: {e}", f"Error reading file: {e}"))
 
     async def _cmd_edit(self, args: Optional[str]) -> None:
-        """Handle .edit command.
+        """Handle /edit command.
 
         Args:
             args: Subcommand (role, session, rag-docs, config, agent)
         """
         if not args:
-            print(_msg("用法: .edit <目标>", "Usage: .edit <target>"))
+            print(_msg("用法: /edit <目标>", "Usage: /edit <target>"))
             print(_msg("目标: role, session, rag-docs, config, agent-config", "Targets: role, session, rag-docs, config, agent-config"))
             return
 
@@ -945,7 +1022,7 @@ class Repl:
                     lines = []
                     while True:
                         try:
-                            line = input("... ")
+                            line = input("/.. ")
                         except EOFError:
                             break
                         lines.append(line)
@@ -967,7 +1044,7 @@ class Repl:
                     lines = []
                     while True:
                         try:
-                            line = input("... ")
+                            line = input("/.. ")
                         except EOFError:
                             break
                         lines.append(line)
@@ -984,13 +1061,13 @@ class Repl:
                 print(_msg("您可以手动编辑: ~/.config/aicortex/config.yaml", "You can manually edit: ~/.config/aicortex/config.yaml"))
 
             case ["agent"]:
-                print(_msg("使用 '.edit agent-config' 编辑 Agent 配置", "Use '.edit agent-config' to edit agent configuration"))
+                print(_msg("使用 '/edit agent-config' 编辑 Agent 配置", "Use '/edit agent-config' to edit agent configuration"))
 
             case _:
                 print(_msg(f"未知的编辑目标: {args}", f"Unknown edit target: {args}"))
 
     async def _cmd_edit_rag_docs(self, args: str) -> None:
-        """Handle .edit rag-docs command.
+        """Handle /edit rag-docs command.
 
         Args:
             args: Full arguments (e.g., "rag-docs", "rag-docs --add", "rag-docs --remove")
@@ -1039,7 +1116,7 @@ class Repl:
         elif action == "--add" or action == "-a":
             # Add documents
             if not paths:
-                print(_msg("用法: .edit rag-docs --add <路径1> <路径2> ...", "Usage: .edit rag-docs --add <path1> <path2> ..."))
+                print(_msg("用法: /edit rag-docs --add <路径1> <路径2> ...", "Usage: /edit rag-docs --add <path1> <path2> ..."))
                 return
 
             import os
@@ -1078,15 +1155,15 @@ class Repl:
 
             if added > 0:
                 print(_msg(f"\n已添加 {added} 个文件", f"\nAdded {added} file(s)"))
-                print(_msg("注意: 搜索需要重建索引。使用: .rebuild rag", "Note: Index rebuild required for search. Use: .rebuild rag"))
+                print(_msg("注意: 搜索需要重建索引。使用: /rebuild rag", "Note: Index rebuild required for search. Use: /rebuild rag"))
                 # Save RAG
                 rag.save()
 
         elif action == "--remove" or action == "-r":
             # Remove documents
             if not paths:
-                print(_msg("用法: .edit rag-docs --remove <文件ID> ...", "Usage: .edit rag-docs --remove <file_id> ..."))
-                print(_msg("使用 .edit rag-docs --list 查看文件 ID", "Use .edit rag-docs --list to see file IDs"))
+                print(_msg("用法: /edit rag-docs --remove <文件ID> ...", "Usage: /edit rag-docs --remove <file_id> ..."))
+                print(_msg("使用 /edit rag-docs --list 查看文件 ID", "Use /edit rag-docs --list to see file IDs"))
                 return
 
             removed = 0
@@ -1110,32 +1187,32 @@ class Repl:
 
             if removed > 0:
                 print(_msg(f"\n已移除 {removed} 个文件", f"\nRemoved {removed} file(s)"))
-                print(_msg("注意: 需要重建索引。使用: .rebuild rag", "Note: Index rebuild required. Use: .rebuild rag"))
+                print(_msg("注意: 需要重建索引。使用: /rebuild rag", "Note: Index rebuild required. Use: /rebuild rag"))
 
         else:
             # No action specified, show help
             print(_msg("RAG 文档编辑", "RAG Document Editing"))
             print()
             print(_msg("用法:", "Usage:"))
-            print("  .edit rag-docs --list")
-            print(_msg("  .edit rag-docs --add <路径1> <路径2> ...", "  .edit rag-docs --add <path1> <path2> ..."))
-            print(_msg("  .edit rag-docs --remove <文件ID> ...", "  .edit rag-docs --remove <file_id> ..."))
+            print("  /edit rag-docs --list")
+            print(_msg("  /edit rag-docs --add <路径1> <路径2> ...", "  /edit rag-docs --add <path1> <path2> ..."))
+            print(_msg("  /edit rag-docs --remove <文件ID> ...", "  /edit rag-docs --remove <file_id> ..."))
             print()
             print(_msg("操作:", "Actions:"))
             print(_msg("  --list, -l       列出所有文档", "  --list, -l       List all documents"))
             print(_msg("  --add, -a       添加文档到 RAG", "  --add, -a       Add documents to RAG"))
             print(_msg("  --remove, -r    从 RAG 移除文档", "  --remove, -r    Remove documents from RAG"))
             print()
-            print(_msg("添加/移除后，运行: .rebuild rag", "After adding/removing, run: .rebuild rag"))
+            print(_msg("添加/移除后，运行: /rebuild rag", "After adding/removing, run: /rebuild rag"))
 
     async def _cmd_save(self, args: Optional[str]) -> None:
-        """Handle .save command.
+        """Handle /save command.
 
         Args:
             args: Subcommand (role, session) or None
         """
         if not args:
-            print(_msg("用法: .save <目标>", "Usage: .save <target>"))
+            print(_msg("用法: /save <目标>", "Usage: /save <target>"))
             print(_msg("目标: role, session", "Targets: role, session"))
             return
 
@@ -1176,7 +1253,7 @@ class Repl:
                 print(_msg(f"未知的保存目标: {args}", f"Unknown save target: {args}"))
 
     async def _cmd_rebuild(self, args: Optional[str]) -> None:
-        """Handle .rebuild rag command.
+        """Handle /rebuild rag command.
 
         Rebuilds RAG indexes after document changes.
 
@@ -1184,7 +1261,7 @@ class Repl:
             args: Should be "rag"
         """
         if args != "rag":
-            print(_msg("用法: .rebuild rag", "Usage: .rebuild rag"))
+            print(_msg("用法: /rebuild rag", "Usage: /rebuild rag"))
             return
 
         if not (StateFlags.RAG in self.state and self.config.rag):
@@ -1198,7 +1275,7 @@ class Repl:
             print(_msg("无法重建临时 RAG", "Cannot rebuild temporary RAG"))
             return
 
-        print(_msg(f"正在重建 RAG '{rag.name}'...", f"Rebuilding RAG '{rag.name}'..."))
+        print(_msg(f"正在重建 RAG '{rag.name}'/..", f"Rebuilding RAG '{rag.name}'/.."))
 
         try:
             # Process pending documents and generate embeddings
@@ -1229,7 +1306,7 @@ class Repl:
             print(_msg(f"重建 RAG 错误: {e}", f"Error rebuilding RAG: {e}"))
 
     async def _cmd_sources(self, args: Optional[str]) -> None:
-        """Handle .sources rag command.
+        """Handle /sources rag command.
 
         Shows citation sources used in the last query.
 
@@ -1237,7 +1314,7 @@ class Repl:
             args: Should be "rag"
         """
         if args != "rag":
-            print(_msg("用法: .sources rag", "Usage: .sources rag"))
+            print(_msg("用法: /sources rag", "Usage: /sources rag"))
             return
 
         if not (StateFlags.RAG in self.state and self.config.rag):
@@ -1255,7 +1332,7 @@ class Repl:
         print(sources)
 
     async def _cmd_empty(self, args: Optional[str]) -> None:
-        """Handle .empty session command.
+        """Handle /empty session command.
 
         Clears all messages from the current session.
 
@@ -1263,7 +1340,7 @@ class Repl:
             args: Should be "session"
         """
         if args != "session":
-            print(_msg("用法: .empty session", "Usage: .empty session"))
+            print(_msg("用法: /empty session", "Usage: /empty session"))
             return
 
         if not (StateFlags.SESSION in self.state and self.config.session):
@@ -1293,7 +1370,7 @@ class Repl:
         print(_msg(f"会话 '{session.name}' 已清空", f"Session '{session.name}' cleared"))
 
     async def _cmd_compress(self, args: Optional[str]) -> None:
-        """Handle .compress session command.
+        """Handle /compress session command.
 
         Compresses session messages into a summary.
 
@@ -1301,7 +1378,7 @@ class Repl:
             args: Should be "session"
         """
         if args != "session":
-            print(_msg("用法: .compress session", "Usage: .compress session"))
+            print(_msg("用法: /compress session", "Usage: /compress session"))
             return
 
         if not (StateFlags.SESSION in self.state and self.config.session):
@@ -1315,7 +1392,7 @@ class Repl:
             print(_msg("无法压缩空会话", "Cannot compress empty session"))
             return
 
-        print(_msg(f"正在压缩会话 '{session.name}'...", f"Compressing session '{session.name}'..."))
+        print(_msg(f"正在压缩会话 '{session.name}'/..", f"Compressing session '{session.name}'/.."))
 
         # Default compression prompt
         compress_prompt = """Please summarize the following conversation concisely:
@@ -1341,7 +1418,7 @@ Conversation:"""
             print(_msg(f"压缩会话错误: {e}", f"Error compressing session: {e}"))
 
     async def _cmd_agent(self, args: Optional[str]) -> None:
-        """Handle .agent command.
+        """Handle /agent command.
 
         Enter or switch to Agent mode.
 
@@ -1349,7 +1426,7 @@ Conversation:"""
             args: Agent name
         """
         if not args:
-            print(_msg("用法: .agent <名称>", "Usage: .agent <name>"))
+            print(_msg("用法: /agent <名称>", "Usage: /agent <name>"))
             print(_msg("\n可用的 Agents:", "\nAvailable agents:"))
             # Try to list available agents
             agents_dir = Path("agents")
@@ -1379,7 +1456,7 @@ Conversation:"""
             # Show conversation starters if available
             starters = agent.conversation_starters()
             if starters:
-                print(_msg("\n提示: 使用 '.starter' 设置对话开始语", "\nTip: Use '.starter' to set a conversation starter"))
+                print(_msg("\n提示: 使用 '/starter' 设置对话开始语", "\nTip: Use '/starter' to set a conversation starter"))
 
         except ValueError as e:
             print(_msg(f"错误: {e}", f"Error: {e}"))
@@ -1387,7 +1464,7 @@ Conversation:"""
             print(_msg(f"加载 Agent 失败: {e}", f"Failed to load agent: {e}"))
 
     async def _cmd_edit_agent_config(self) -> None:
-        """Handle .edit agent-config command.
+        """Handle /edit agent-config command.
 
         Edit the current agent's configuration.
         """
@@ -1411,7 +1488,7 @@ Conversation:"""
             lines = []
             while True:
                 try:
-                    line = input("... ")
+                    line = input("/.. ")
                 except EOFError:
                     break
                 if line.strip():
@@ -1434,7 +1511,7 @@ Conversation:"""
             print(_msg("\n编辑已取消", "\nEdit cancelled"))
 
     async def _cmd_starter(self, args: Optional[str]) -> None:
-        """Handle .starter command.
+        """Handle /starter command.
 
         Set a conversation starter for the current agent.
 
@@ -1457,7 +1534,7 @@ Conversation:"""
             print(_msg(f"'{agent.name}' 的对话开始语:", f"Conversation starters for '{agent.name}':"))
             for i, starter in enumerate(starters, 1):
                 print(f"  {i}. {starter}")
-            print(_msg("\n用法: .starter <数字> 或 .starter <文本>", "\nUsage: .starter <number> or .starter <text>"))
+            print(_msg("\n用法: /starter <数字> 或 /starter <文本>", "\nUsage: /starter <number> or /starter <text>"))
             return
 
         # Check if args is a number
@@ -1474,7 +1551,7 @@ Conversation:"""
             await self._handle_input(args)
 
     async def _cmd_macro(self, args: Optional[str]) -> None:
-        """Handle .macro command.
+        """Handle /macro command.
 
         Execute a macro or list available macros.
 
@@ -1501,7 +1578,7 @@ Conversation:"""
             for macro_name in macros:
                 try:
                     macro = registry.load_macro(macro_name)
-                    usage = macro.usage(f".macro {macro_name}")
+                    usage = macro.usage(f"/macro {macro_name}")
                     print(f"  {usage}")
                 except Exception:
                     print(f"  {macro_name}")
@@ -1533,7 +1610,7 @@ Conversation:"""
                 command = Macro.interpolate_command(step, variables)
 
                 # Parse and execute the command
-                if command.startswith("."):
+                if command.startswith("/"):
                     # It's a REPL command
                     cmd_parts = command.split(None, 1)
                     cmd_name = cmd_parts[0]
@@ -1545,7 +1622,7 @@ Conversation:"""
 
         except ValueError as e:
             print(_msg(f"错误: {e}", f"Error: {e}"))
-            print(_msg(f"\n用法: {macro.usage(f'.macro {macro_name}')}", f"\nUsage: {macro.usage(f'.macro {macro_name}')}"))
+            print(_msg(f"\n用法: {macro.usage(f'/macro {macro_name}')}", f"\nUsage: {macro.usage(f'/macro {macro_name}')}"))
         except Exception as e:
             print(_msg(f"执行宏错误: {e}", f"Error executing macro: {e}"))
 

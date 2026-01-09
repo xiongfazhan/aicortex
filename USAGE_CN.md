@@ -124,83 +124,83 @@ aicortex --serve 127.0.0.1:8000
 aicortex
 
 # 帮助与信息
-.help
-.info
+/help
+/info
 
 # 切换模型与角色
-.model openai:gpt-4
-.role programmer
+/model openai:gpt-4
+/role programmer
 
 # 会话管理
-.session daily
-.compress session
-.save session
+/session daily
+/compress session
+/save session
 
 # RAG 使用
-.rag my-docs
-.edit rag-docs --add README.md
-.rebuild rag
-.sources rag
+/rag my-docs
+/edit rag-docs --add README.md
+/rebuild rag
+/sources rag
 
 # 语言与运行时设置
-.language zh
-.set temperature=0.7
+/language zh
+/set temperature=0.7
 
 # 退出
-.exit
+/exit
 ```
 
 ### REPL 参数说明
 
 ```text
 基础:
-  .help
-  .info
-  .model <模型>
-  .prompt <提示>
-  .set <键>=<值>
-  .language <zh|en|auto>
-  .exit
+  /help
+  /info
+  /model <模型>
+  /prompt <提示>
+  /set <键>=<值>
+  /language <zh|en|auto>
+  /exit
 
 角色:
-  .role <名称>
-  .info role
-  .edit role
-  .save role
-  .exit role
+  /role <名称>
+  /info role
+  /edit role
+  /save role
+  /exit role
 
 会话:
-  .session <名称>
-  .empty session
-  .compress session
-  .info session
-  .edit session
-  .save session
-  .exit session
+  /session <名称>
+  /empty session
+  /compress session
+  /info session
+  /edit session
+  /save session
+  /exit session
 
 RAG:
-  .rag <名称>
-  .edit rag-docs --list
-  .edit rag-docs --add <路径...>
-  .edit rag-docs --remove <文件ID...>
-  .rebuild rag
-  .sources rag
-  .info rag
-  .exit rag
+  /rag <名称>
+  /edit rag-docs --list
+  /edit rag-docs --add <路径...>
+  /edit rag-docs --remove <文件ID...>
+  /rebuild rag
+  /sources rag
+  /info rag
+  /exit rag
 
 输入:
-  .file <路径|目录|URL>
-  .continue
-  .regenerate
-  .copy
+  /file <路径|目录|URL>
+  /continue
+  /regenerate
+  /copy
 
 Agent:
-  .agent <名称>
-  .starter [<数字>|<文本>]
-  .edit agent-config
+  /agent <名称>
+  /starter [<数字>|<文本>]
+  /edit agent-config
 
 宏:
-  .macro [<宏名> [args...]]
+  /macro [<宏名> [args...]]
 ```
 
 ### 加载配置文件
@@ -236,7 +236,7 @@ aicortex "你好"
 ### 文本切分测试
 
 ```python
-from aicortex.rag.splitter import RecursiveCharacterTextSplitter, RagDocument, SplitterChunkHeaderOptions
+from aicortex/rag.splitter import RecursiveCharacterTextSplitter, RagDocument, SplitterChunkHeaderOptions
 
 # 准备文本
 text = "Python 是一种编程语言..."

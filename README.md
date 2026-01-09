@@ -145,15 +145,15 @@ aicortex --serve 127.0.0.1:8000
 ```bash
 aicortex
 
-> .help                  # Show all commands
-> .model                 # Show current model
-> .model openai:gpt-4    # Switch model
-> .role programmer       # Switch role
-> .session my-chat       # Save/load session
-> .language zh           # Switch to Chinese
-> .language en           # Switch to English
-> .language auto         # Auto-detect language
-> .exit                  # Exit REPL
+> /help                  # Show all commands
+> /model                 # Show current model
+> /model openai:gpt-4    # Switch model
+> /role programmer       # Switch role
+> /session my-chat       # Save/load session
+> /language zh           # Switch to Chinese
+> /language en           # Switch to English
+> /language auto         # Auto-detect language
+> /exit                  # Exit REPL
 ```
 
 ---
