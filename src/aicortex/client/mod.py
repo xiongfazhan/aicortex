@@ -82,6 +82,8 @@ class EmbeddingsData:
 
     texts: list[str]
     query: bool = False
+    model: Optional[str] = None
+    input_type: Optional[str] = None  # For NIM: 'query' or 'passage'
 
 
 @dataclass
@@ -90,7 +92,8 @@ class RerankData:
 
     query: str
     documents: list[str]
-    top_n: int
+    top_n: int = 5
+    model: Optional[str] = None
 
 
 class Client(ABC):
