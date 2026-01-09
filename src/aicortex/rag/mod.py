@@ -640,7 +640,7 @@ class Rag:
                 return None
 
             from ..client import EmbeddingsData
-            data = EmbeddingsData(texts=[query], query=True, input_type="query")
+            data = EmbeddingsData(texts=[query], query=True, input_type="query", truncate="NONE")
             embeddings = await client.embeddings(data)
             return embeddings[0] if embeddings else None
         except Exception as e:
@@ -752,7 +752,8 @@ class Rag:
                 data = EmbeddingsData(
                     texts=chunks,
                     query=False,
-                    input_type="passage"
+                    input_type="passage",
+                    truncate="NONE"
                 )
                 embeddings = await client.embeddings(data)
             except Exception as e:

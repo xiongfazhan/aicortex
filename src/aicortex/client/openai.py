@@ -167,6 +167,10 @@ class OpenAIClient(Client):
         elif data.query:
             body["input_type"] = "query"
 
+        # Add truncate for NIM
+        if data.truncate:
+            body["truncate"] = data.truncate
+
         response = await self.http_client.post(url, headers=headers, json=body)
         response.raise_for_status()
 

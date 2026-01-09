@@ -60,6 +60,20 @@ clients:
 | `meta/codellama-70b-instruct` | 70B | 131K | 代码生成 |
 | `google/gemma-2-27b-it` | 27B | 131K | Google Gemma |
 
+### Embedding 模型（用于 RAG）
+
+| 模型 | 上下文 | 特点 |
+|------|--------|------|
+| `nvidia/nv-embedqa-e5-v5` | 512 | 轻量级，速度快 |
+| `nvidia/nv-embedqa-mistral-7b-v2` | 32K | 高质量，长上下文 |
+
+### Rerank 模型（用于 RAG）
+
+| 模型 | 上下文 | 特点 |
+|------|--------|------|
+| `nvidia/nv-rerankqa-mistral-4b-v3` | 32K | 高质量重排序 |
+| `nvidia/llama-3.2-nv-rerankqa-1b-v2` | 32K | 轻量级，速度快 |
+
 ## 使用示例
 
 ### 基本使用
@@ -178,6 +192,29 @@ clients:
         type: chat
         max_input_tokens: 131072
         max_output_tokens: 4096
+
+      # Embedding 模型（用于 RAG）
+      - name: nvidia/nv-embedqa-e5-v5
+        type: embedding
+        max_input_tokens: 512
+
+      - name: nvidia/nv-embedqa-mistral-7b-v2
+        type: embedding
+        max_input_tokens: 32768
+
+      # Rerank 模型（用于 RAG）
+      - name: nvidia/nv-rerankqa-mistral-4b-v3
+        type: rerank
+        max_input_tokens: 32768
+
+      - name: nvidia/llama-3.2-nv-rerankqa-1b-v2
+        type: rerank
+        max_input_tokens: 32768
+
+# RAG 配置（使用 NIM 模型）
+rag_embedding_model: nim:nvidia/nv-embedqa-e5-v5
+rag_reranker_model: nim:nvidia/nv-rerankqa-mistral-4b-v3
+rag_top_k: 5
 ```
 
 ## 环境变量
@@ -273,6 +310,41 @@ aicortex -m nim:meta/llama-3.1-70b-instruct "
 "
 ```
 
+## 使用 NIM 进行 RAG
+
+NIM 提供了专门的 Embedding 和 Rerank 模型，可以构建完整的 RAG 系统：
+
+### 配置 RAG
+
+```yaml
+# RAG 配置
+rag_embedding_model: nim:nvidia/nv-embedqa-e5-v5
+rag_reranker_model: nim:nvidia/nv-rerankqa-mistral-4b-v3
+rag_top_k: 5
+rag_chunk_size: 1000
+rag_chunk_overlap: 200
+```
+
+### Embedding 模型选择
+
+- **nv-embedqa-e5-v5**: 轻量级，适合快速检索，上下文 512 tokens
+- **nv-embedqa-mistral-7b-v2**: 高质量，支持长上下文 32K tokens
+
+### Rerank 模型选择
+
+- **nv-rerankqa-mistral-4b-v3**: 高质量重排序，推荐使用
+- **llama-3.2-nv-rerankqa-1b-v2**: 轻量级，速度更快
+
+### RAG 使用示例
+
+```bash
+# 创建 RAG 索引
+aicortex --rag my-docs --add ./docs/*.md
+
+# 使用 RAG 查询
+aicortex --rag my-docs "文档中关于 X 说了什么？"
+```
+
 ## 总结
 
 NVIDIA NIM 是一个极佳的免费选择，特别适合：
@@ -280,5 +352,6 @@ NVIDIA NIM 是一个极佳的免费选择，特别适合：
 - 需要长上下文（131K tokens）
 - 开发和测试环境
 - 代码生成和分析
+- 构建完整的 RAG 系统（Embedding + Rerank）
 
 立即可用，无需等待审核！

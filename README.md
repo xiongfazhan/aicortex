@@ -256,9 +256,9 @@ clients:
         type: chat
         max_input_tokens: 8192
 
-# RAG configuration
-rag_embedding_model: openai:text-embedding-ada-002
-rag_reranker_model: cohere:rerank-english-v2.0
+# RAG configuration (using NVIDIA NIM - free)
+rag_embedding_model: nim:nvidia/nv-embedqa-e5-v5
+rag_reranker_model: nim:nvidia/nv-rerankqa-mistral-4b-v3
 rag_top_k: 5
 
 # Appearance
@@ -306,8 +306,12 @@ aicortex --rag my-docs "What does the documentation say about X?"
 ### RAG Configuration
 
 ```yaml
-rag_embedding_model: openai:text-embedding-ada-002
-rag_reranker_model: cohere:rerank-english-v2.0
+# Using NVIDIA NIM (recommended, free)
+rag_embedding_model: nim:nvidia/nv-embedqa-e5-v5
+rag_reranker_model: nim:nvidia/nv-rerankqa-mistral-4b-v3
+# Or use other providers:
+# rag_embedding_model: openai:text-embedding-ada-002
+# rag_reranker_model: cohere:rerank-english-v2.0
 rag_top_k: 5
 rag_chunk_size: 1000
 rag_chunk_overlap: 200

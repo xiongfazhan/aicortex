@@ -292,3 +292,58 @@ aicortex "你好"
 2. **设置文件权限** - `chmod 600 ~/.config/aicortex/config.yaml`
 3. **使用 .env 文件** - 配合 `python-dotenv` 加载环境变量
 4. **不要提交配置** - 将 `config.yaml` 添加到 `.gitignore`
+
+## RAG 配置
+
+RAG（检索增强生成）需要配置 Embedding 模型和可选的 Rerank 模型。
+
+### 使用 NVIDIA NIM（推荐，免费）
+
+```yaml
+# Embedding 模型（用于文档向量化）
+rag_embedding_model: nim:nvidia/nv-embedqa-e5-v5
+# 可选: nim:nvidia/nv-embedqa-mistral-7b-v2（支持更长上下文）
+
+# Rerank 模型（用于检索结果重排序）
+rag_reranker_model: nim:nvidia/nv-rerankqa-mistral-4b-v3
+# 可选: nim:nvidia/llama-3.2-nv-rerankqa-1b-v2（更轻量）
+
+# 其他 RAG 参数
+rag_top_k: 5              # 返回结果数量
+rag_chunk_size: 1000      # 文档切分块大小
+rag_chunk_overlap: 200    # 切分块重叠
+```
+
+### NIM Embedding/Rerank 模型说明
+
+| 模型类型 | 模型名称 | 上下文 | 特点 |
+|---------|---------|--------|------|
+| Embedding | `nvidia/nv-embedqa-e5-v5` | 512 | 轻量级，速度快 |
+| Embedding | `nvidia/nv-embedqa-mistral-7b-v2` | 32K | 高质量，长上下文 |
+| Rerank | `nvidia/nv-rerankqa-mistral-4b-v3` | 32K | 高质量重排序 |
+| Rerank | `nvidia/llama-3.2-nv-rerankqa-1b-v2` | 32K | 轻量级，速度快 |
+
+### 使用其他提供商
+
+```yaml
+# OpenAI
+rag_embedding_model: openai:text-embedding-ada-002
+
+# Cohere
+rag_reranker_model: cohere:rerank-english-v2.0
+```
+
+### RAG 使用示例
+
+```bash
+# 创建 RAG 索引
+aicortex --rag my-docs --add ./docs/*.md
+
+# 使用 RAG 查询
+aicortex --rag my-docs "文档中关于 X 说了什么？"
+
+# 在 REPL 中使用
+aicortex
+> .rag my-docs
+> 查询文档内容
+```

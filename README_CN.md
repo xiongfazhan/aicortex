@@ -261,8 +261,8 @@ clients:
         max_input_tokens: 8192
 
 # RAG 配置
-rag_embedding_model: openai:text-embedding-ada-002
-rag_reranker_model: cohere:rerank-english-v2.0
+rag_embedding_model: nim:nvidia/nv-embedqa-e5-v5
+rag_reranker_model: nim:nvidia/nv-rerankqa-mistral-4b-v3
 rag_top_k: 5
 
 # 外观设置
@@ -310,8 +310,14 @@ aicortex --rag my-docs "文档中关于 X 说了什么？"
 ### RAG 配置
 
 ```yaml
-rag_embedding_model: openai:text-embedding-ada-002
-rag_reranker_model: cohere:rerank-english-v2.0
+# 使用 NVIDIA NIM 模型（推荐，免费）
+rag_embedding_model: nim:nvidia/nv-embedqa-e5-v5
+rag_reranker_model: nim:nvidia/nv-rerankqa-mistral-4b-v3
+
+# 或使用其他提供商
+# rag_embedding_model: openai:text-embedding-ada-002
+# rag_reranker_model: cohere:rerank-english-v2.0
+
 rag_top_k: 5
 rag_chunk_size: 1000
 rag_chunk_overlap: 200
